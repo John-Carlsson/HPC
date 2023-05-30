@@ -1,0 +1,4 @@
+{"clangd.path": "/usr/local/opt/llvm/bin/clangd",
+"C_Cpp.default.compilerPath": "/usr/local/opt/llvm/bin/clang"
+
+}

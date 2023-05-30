@@ -1,0 +1,402 @@
+#include "math_tensor.hpp"
+#include "math_cuda.hpp"
+#include <stdio.h>
+
+// Define some error checking macros.
+#define cudaErrCheck(stat)                         \
+    {                                              \
+        cudaErrCheck_((stat), __FILE__, __LINE__); \
+    }
+void cudaErrCheck_(cudaError_t stat, const char *file, int line)
+{
+    if (stat != cudaSuccess)
+    {
+        fprintf(stderr, "CUDA Error: %s %s %d\n", cudaGetErrorString(stat), file, line);
+    }
+}
+
+void vector_add_tensor(float *out, float *a, float *b, int n)
+{
+    vector_add_cuda(out, a, b, n);
+}
+
+#include <cuda.h>
+#include <mma.h>
+#include <cuda_runtime_api.h>
+#include <stdio.h>
+#include <cuda_fp16.h>
+
+using namespace nvcuda;
+
+#define BLOCK_SIZE 64
+
+#define WMMA_TILE_SIZE 16
+
+__global__ void mat_mul_add_tensor(half *a, half *b, float *c, float *d, int N)
+{
+    // Tile using a 2D grid
+    int WarpX = (blockIdx.x * blockDim.x + threadIdx.x) / warpSize;
+    int WarpY = (blockIdx.y * blockDim.y + threadIdx.y);
+
+    // Declare the fragments
+    wmma::fragment<wmma::matrix_a, WMMA_TILE_SIZE, WMMA_TILE_SIZE, WMMA_TILE_SIZE, half, wmma::row_major> a_frag;
+    wmma::fragment<wmma::matrix_b, WMMA_TILE_SIZE, WMMA_TILE_SIZE, WMMA_TILE_SIZE, half, wmma::row_major> b_frag;
+    wmma::fragment<wmma::accumulator, WMMA_TILE_SIZE, WMMA_TILE_SIZE, WMMA_TILE_SIZE, float> c_frag;
+
+    if(c != nullptr)
+        wmma::load_matrix_sync(c_frag, c + WarpX * 16 + WarpY * 16 * N, N, wmma::mem_row_major);
+    else
+        wmma::fill_fragment(c_frag, 0.0f);
+
+
+    // Loop over k
+    for (int i = 0; i < N; i += WMMA_TILE_SIZE)
+    {
+
+        wmma::load_matrix_sync(a_frag, a + WarpY * 16 * N + i, N); // WarpY * 16 * N + i
+        wmma::load_matrix_sync(b_frag, b + WarpX * 16 + i * N, N); // WarpX * 16 + i * N
+        
+        // Perform the matrix multiplication
+        wmma::mma_sync(c_frag, a_frag, b_frag, c_frag);
+    }
+    int cRow = WarpX * WMMA_TILE_SIZE;
+    int cCol = WarpY * WMMA_TILE_SIZE;
+    wmma::store_matrix_sync(d + cCol + cRow * N, c_frag, N, wmma::mem_row_major);
+}
+
+
+__global__ void mat_mul_add_tensor_shared_mem(half *a, half *b, float *c, float *d, int N)
+{
+    __shared__ half a_shared [BLOCK_SIZE * BLOCK_SIZE];
+    __shared__ half b_shared [BLOCK_SIZE * BLOCK_SIZE];
+
+    // The kernel/thread global id, row i of left matrix
+    unsigned int row = blockIdx.y * blockDim.y + threadIdx.y;
+    unsigned int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+    // Tile using a 2D grid
+    int WarpX = col / warpSize;
+    int WarpY = row;
+
+    // Tile using a 2D grid
+    int LocalWarpX = threadIdx.y / warpSize;
+    int LocalWarpY = threadIdx.x;
+
+    // Declare the fragments
+    wmma::fragment<wmma::matrix_a, WMMA_TILE_SIZE, WMMA_TILE_SIZE, WMMA_TILE_SIZE, half, wmma::row_major> a_frag;
+    wmma::fragment<wmma::matrix_b, WMMA_TILE_SIZE, WMMA_TILE_SIZE, WMMA_TILE_SIZE, half, wmma::row_major> b_frag;
+    wmma::fragment<wmma::accumulator, WMMA_TILE_SIZE, WMMA_TILE_SIZE, WMMA_TILE_SIZE, float> c_frag;
+
+    if(c != nullptr)
+        wmma::load_matrix_sync(c_frag, c + WarpX * 16 + WarpY * 16 * N, N, wmma::mem_row_major);
+    else
+        wmma::fill_fragment(c_frag, 0.0f);
+
+
+    // Loop over k
+    for (int i = 0; i < N; i += BLOCK_SIZE)
+    {
+        // load into shared memory, coalesced
+        a_shared[threadIdx.y *BLOCK_SIZE + threadIdx.x] = a[row*N + i + threadIdx.x];
+        b_shared[threadIdx.y *BLOCK_SIZE + threadIdx.x] = b[i*(N + threadIdx.y) + threadIdx.x];
+        
+        // sync before computation
+        __syncthreads();
+
+        for (int k = 0; k < BLOCK_SIZE; k+=WMMA_TILE_SIZE)
+        {
+            wmma::load_matrix_sync(a_frag, a_shared + k + LocalWarpY * WMMA_TILE_SIZE, BLOCK_SIZE); // WarpY * 16 * N + i
+            wmma::load_matrix_sync(b_frag, b_shared + LocalWarpX + k, BLOCK_SIZE); // WarpX * 16 + i * N
+            
+            // Perform the matrix multiplication
+            wmma::mma_sync(c_frag, a_frag, b_frag, c_frag);
+        }
+        
+
+        
+    }
+    int cRow = WarpX * WMMA_TILE_SIZE;
+    int cCol = WarpY * WMMA_TILE_SIZE;
+    wmma::store_matrix_sync(d + cCol + cRow * N, c_frag, N, wmma::mem_row_major);
+}
+
+void matrix_multiplication_tensor(float *out, float *a, float *b, int n)
+{
+    half *t_a = (half *)malloc(sizeof(half) * n * n);
+    for (size_t i = 0; i < n * n; i++)
+    {
+        t_a[i] = (half)a[i];
+    }
+    half *t_b = (half *)malloc(sizeof(half) * n * n);
+    for (size_t i = 0; i < n * n; i++)
+    {
+        t_b[i] = (half)b[i];
+    }
+
+    half *d_a, *d_b;
+    float *d_out;
+    cudaErrCheck(cudaMalloc((void **)&d_a, sizeof(half) * n * n));
+    cudaErrCheck(cudaMemcpy(d_a, t_a, n * n * sizeof(half), cudaMemcpyHostToDevice));
+
+    cudaErrCheck(cudaMalloc((void **)&d_b, sizeof(half) * n * n));
+    cudaErrCheck(cudaMemcpy(d_b, t_b, n * n * sizeof(half), cudaMemcpyHostToDevice));
+
+    cudaErrCheck(cudaMalloc((void **)&d_out, sizeof(float) * n * n));
+    cudaErrCheck(cudaMemcpy(d_out, out, n * n * sizeof(float), cudaMemcpyHostToDevice));
+
+    dim3 gridDim, blockDim;
+    // 16 warps in one block
+    // 128x4 means we have 16 warps and a block computes a 64x64 output tile
+    blockDim.x = 128;
+    blockDim.y = 4;
+
+    //gridDim.x = (n + (WMMA_TILE_SIZE * blockDim.x / 32) - 1) / (WMMA_TILE_SIZE * blockDim.x / 32);
+    //gridDim.y = (n + WMMA_N * blockDim.y - 1) / (WMMA_N * blockDim.y);
+    gridDim.x = n/(blockDim.x/32 * 16);
+    gridDim.y = n/(blockDim.y*16);
+
+    mat_mul_add_tensor<<<gridDim, blockDim>>>(d_a, d_b, nullptr, d_out, n);
+
+    cudaErrCheck(cudaMemcpy(out, d_out, n * n * sizeof(float), cudaMemcpyDeviceToHost));
+
+    cudaFree(d_a);
+    cudaFree(d_b);
+    cudaFree(d_out);
+    free(t_a);
+    free(t_b);
+}
+
+void matrix_multiplication_add_tensor(float *out, float *a, float *b, float *c, int n)
+{
+
+    half *t_a = (half *)malloc(sizeof(half) * n * n);
+    for (size_t i = 0; i < n * n; i++)
+    {
+        t_a[i] = (half)a[i];
+    }
+    half *t_b = (half *)malloc(sizeof(half) * n * n);
+    for (size_t i = 0; i < n * n; i++)
+    {
+        t_b[i] = (half)b[i];
+    }
+
+    half *d_a, *d_b;
+    float *d_c, *d_out;
+    cudaErrCheck(cudaMalloc((void **)&d_a, sizeof(half) * n * n));
+    cudaErrCheck(cudaMemcpy(d_a, t_a, n * n * sizeof(half), cudaMemcpyHostToDevice));
+
+    cudaErrCheck(cudaMalloc((void **)&d_b, sizeof(half) * n * n));
+    cudaErrCheck(cudaMemcpy(d_b, t_b, n * n * sizeof(half), cudaMemcpyHostToDevice));
+
+    cudaErrCheck(cudaMalloc((void **)&d_out, sizeof(float) * n * n));
+    cudaErrCheck(cudaMemcpy(d_out, out, n * n * sizeof(float), cudaMemcpyHostToDevice));
+
+    cudaErrCheck(cudaMalloc((void **)&d_c, sizeof(float) * n * n));
+    cudaErrCheck(cudaMemcpy(d_c, c, n * n * sizeof(float), cudaMemcpyHostToDevice));
+
+    dim3 gridDim, blockDim;
+    // 16 warps in one block
+    // 128x4 means we have 16 warps and a block computes a 64x64 output tile
+    blockDim.x = 128;
+    blockDim.y = 4;
+
+    //gridDim.x = (n + (WMMA_TILE_SIZE * blockDim.x / 32) - 1) / (WMMA_TILE_SIZE * blockDim.x / 32);
+    //gridDim.y = (n + WMMA_N * blockDim.y - 1) / (WMMA_N * blockDim.y);
+    gridDim.x = n/(blockDim.x/32 * 16);
+    gridDim.y = n/(blockDim.y*16);
+
+    mat_mul_add_tensor<<<gridDim, blockDim>>>(d_a, d_b, d_c, d_out, n);
+
+    cudaErrCheck(cudaMemcpy(out, d_out, n * n * sizeof(float), cudaMemcpyDeviceToHost));
+
+    cudaFree(d_a);
+    cudaFree(d_b);
+    cudaFree(d_c);
+    cudaFree(d_out);
+    free(t_a);
+    free(t_b);
+}
+
+MMAOptTensor::MMAOptTensor(float *A, float *B, float *C, float *Out, unsigned int size) :
+        __matrixSize(size),
+        _A(A),
+        _B(B),
+        _C(C),
+        _Out(Out)
+{
+    
+}
+
+const char *MMAOptTensor::GetOPTMame()
+{
+    return name;
+}
+
+void MMAOptTensor::Import()
+{
+    half *t_a = (half *)malloc(sizeof(half) * __matrixSize * __matrixSize);
+    for (size_t i = 0; i < __matrixSize * __matrixSize; i++)
+    {
+        t_a[i] = (half)this->_A[i];
+    }
+    half *t_b = (half *)malloc(sizeof(half) * __matrixSize * __matrixSize);
+    for (size_t i = 0; i < __matrixSize * __matrixSize; i++)
+    {
+        t_b[i] = (half)this->_B[i];
+    }
+
+    if (d_a == nullptr) cudaMalloc((void **)&(this->d_a), sizeof(half) * __matrixSize*__matrixSize);
+    cudaMemcpy(this->d_a, t_a, __matrixSize*__matrixSize*sizeof(half), cudaMemcpyHostToDevice);
+
+    if (d_b == nullptr) cudaMalloc((void **)(&this->d_b), sizeof(half) * __matrixSize*__matrixSize);
+    cudaMemcpy(this->d_b, t_b, __matrixSize*__matrixSize*sizeof(half), cudaMemcpyHostToDevice);
+
+    if (d_out == nullptr) cudaMalloc((void **)&(this->d_out), sizeof(float) * __matrixSize*__matrixSize);
+    cudaMemcpy(this->d_out, this->_Out, __matrixSize*__matrixSize*sizeof(float), cudaMemcpyHostToDevice);
+
+    if (d_c == nullptr) cudaMalloc((void **)&(this->d_c), sizeof(float) * __matrixSize*__matrixSize);
+    cudaMemcpy(this->d_c, this->_C, __matrixSize*__matrixSize*sizeof(float), cudaMemcpyHostToDevice);
+
+    free(t_a);
+    free(t_b);
+}
+
+void MMAOptTensor::Compute()
+{
+    dim3 gridDim, blockDim;
+    // 16 warps in one block
+    // 128x4 means we have 16 warps and a block computes a 64x64 output tile
+    blockDim.x = 128;
+    blockDim.y = 4;
+
+    gridDim.x = this->__matrixSize/(blockDim.x/32 * 16);
+    gridDim.y = this->__matrixSize/(blockDim.y*16);
+
+    mat_mul_add_tensor<<<gridDim, blockDim>>>((half*)this->d_a, (half*)this->d_b, this->d_c, this->d_out, this->__matrixSize);
+}
+
+void MMAOptTensor::Export()
+{
+    cudaMemcpy(this->_Out, this->d_out, this->__matrixSize*this->__matrixSize*sizeof(float), cudaMemcpyDeviceToHost);
+}
+
+void MMAOptTensor::ComputeNTime(unsigned int loopCount)
+{
+    dim3 gridDim, blockDim;
+    // 16 warps in one block
+    // 128x4 means we have 16 warps and a block computes a 64x64 output tile
+    blockDim.x = 128;
+    blockDim.y = 4;
+
+    gridDim.x = this->__matrixSize/(blockDim.x/32 * 16);
+    gridDim.y = this->__matrixSize/(blockDim.y*16);
+    for (unsigned int i = 0; i < loopCount; i++)
+    {
+        mat_mul_add_tensor<<<gridDim, blockDim>>>((half*)this->d_a, (half*)this->d_b, this->d_c, this->d_out, this->__matrixSize);
+    }
+    
+}
+
+void MMAOptTensor::Cleanup()
+{
+    if (d_a != nullptr) cudaFree(d_a);
+    if (d_b != nullptr) cudaFree(d_b);
+    if (d_c != nullptr) cudaFree(d_c);
+    if (d_out != nullptr) cudaFree(d_out);
+    d_a = nullptr;
+    d_b = nullptr;
+    d_c = nullptr;
+    d_out = nullptr;
+}
+
+MMAOptTensorShared::MMAOptTensorShared(float *A, float *B, float *C, float *Out, unsigned int size) :
+        __matrixSize(size),
+        _A(A),
+        _B(B),
+        _C(C),
+        _Out(Out)
+{
+    
+}
+
+const char *MMAOptTensorShared::GetOPTMame()
+{
+    return name;
+}
+
+void MMAOptTensorShared::Import()
+{
+    half *t_a = (half *)malloc(sizeof(half) * __matrixSize * __matrixSize);
+    for (size_t i = 0; i < __matrixSize * __matrixSize; i++)
+    {
+        t_a[i] = (half)this->_A[i];
+    }
+    half *t_b = (half *)malloc(sizeof(half) * __matrixSize * __matrixSize);
+    for (size_t i = 0; i < __matrixSize * __matrixSize; i++)
+    {
+        t_b[i] = (half)this->_B[i];
+    }
+
+    if (d_a == nullptr) cudaMalloc((void **)&(this->d_a), sizeof(half) * __matrixSize*__matrixSize);
+    cudaMemcpy(this->d_a, t_a, __matrixSize*__matrixSize*sizeof(half), cudaMemcpyHostToDevice);
+
+    if (d_b == nullptr) cudaMalloc((void **)(&this->d_b), sizeof(half) * __matrixSize*__matrixSize);
+    cudaMemcpy(this->d_b, t_b, __matrixSize*__matrixSize*sizeof(half), cudaMemcpyHostToDevice);
+
+    if (d_out == nullptr) cudaMalloc((void **)&(this->d_out), sizeof(float) * __matrixSize*__matrixSize);
+    cudaMemcpy(this->d_out, this->_Out, __matrixSize*__matrixSize*sizeof(float), cudaMemcpyHostToDevice);
+
+    if (d_c == nullptr) cudaMalloc((void **)&(this->d_c), sizeof(float) * __matrixSize*__matrixSize);
+    cudaMemcpy(this->d_c, this->_C, __matrixSize*__matrixSize*sizeof(float), cudaMemcpyHostToDevice);
+
+    free(t_a);
+    free(t_b);
+}
+
+void MMAOptTensorShared::Compute()
+{
+    dim3 gridDim, blockDim;
+    // 16 warps in one block
+    // 128x4 means we have 16 warps and a block computes a 64x64 output tile
+    blockDim.x = 128;
+    blockDim.y = 4;
+
+    gridDim.x = this->__matrixSize/(blockDim.x/32 * 16);
+    gridDim.y = this->__matrixSize/(blockDim.y*16);
+
+    mat_mul_add_tensor_shared_mem<<<gridDim, blockDim>>>((half*)this->d_a, (half*)this->d_b, this->d_c, this->d_out, this->__matrixSize);
+}
+
+void MMAOptTensorShared::Export()
+{
+    cudaMemcpy(this->_Out, this->d_out, this->__matrixSize*this->__matrixSize*sizeof(float), cudaMemcpyDeviceToHost);
+}
+
+void MMAOptTensorShared::ComputeNTime(unsigned int loopCount)
+{
+    dim3 gridDim, blockDim;
+    // 16 warps in one block
+    // 128x4 means we have 16 warps and a block computes a 64x64 output tile
+    blockDim.x = 128;
+    blockDim.y = 4;
+
+    gridDim.x = this->__matrixSize/(blockDim.x/32 * 16);
+    gridDim.y = this->__matrixSize/(blockDim.y*16);
+    for (unsigned int i = 0; i < loopCount; i++)
+    {
+        mat_mul_add_tensor_shared_mem<<<gridDim, blockDim>>>((half*)this->d_a, (half*)this->d_b, this->d_c, this->d_out, this->__matrixSize);
+    }
+    
+}
+
+void MMAOptTensorShared::Cleanup()
+{
+    if (d_a != nullptr) cudaFree(d_a);
+    if (d_b != nullptr) cudaFree(d_b);
+    if (d_c != nullptr) cudaFree(d_c);
+    if (d_out != nullptr) cudaFree(d_out);
+    d_a = nullptr;
+    d_b = nullptr;
+    d_c = nullptr;
+    d_out = nullptr;
+}
