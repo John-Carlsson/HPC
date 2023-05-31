@@ -37,11 +37,11 @@ public:
 
     const char *GetOPTMame();
 
-    void Import();
+    double Import();
 
-    void Compute();
+    double Compute();
 
-    void Export();
+    double Export();
 
     void ComputeNTime(unsigned int loopCount);
 

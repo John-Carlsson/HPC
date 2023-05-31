@@ -14,9 +14,11 @@
 #include <vector>
 #include <numeric>
 
+#include <thread>
+
 //#define N 256
 #define PLATFORM CPU
-#define ExecutionCount 50
+#define ExecutionCount 20
 
 #define MakeMatrix(name, sizeX, sizeY, cell_value)\
 float *name = NULL;\
@@ -79,6 +81,7 @@ void testCycle(size_t N, size_t CPU_threshold, int debugMatrices)
 
     MakeMatrix(OutCPU, N, N, 0)
     MakeMatrix(OutCudaGM, N, N, 0)
+    MakeMatrix(OutCudaH, N, N, 0)
     MakeMatrix(OutCuda, N, N, 0)
     MakeMatrix(OutTensor, N, N, 0)
     MakeMatrix(OutTensorS, N, N, 0)
@@ -86,21 +89,28 @@ void testCycle(size_t N, size_t CPU_threshold, int debugMatrices)
     MMAOptCPU MMACpu(A, B, C, OutCPU, N);
     MMAOptCUDAGlobMem MMACudaGM(A, B, C, OutCudaGM, N);
     MMAOptCUDA MMACuda(A, B, C, OutCuda, N);
-    MMAOptTensor MMATemsor(A, B, C, OutTensor, N);
+    MMAOptCUDAH MMACudaH(A, B, C, OutCudaH, N);
+    MMAOptTensor MMATensor(A, B, C, OutTensor, N);
     MMAOptTensorShared MMATemsorS(A, B, C, OutTensorS, N);
-    std::vector<MMAOperation*> Ops = {&MMACpu, &MMACudaGM, &MMACuda, &MMATemsor, &MMATemsorS};
-    std::vector<float*> OutBuffs = {OutCPU, OutCudaGM, OutCuda, OutTensor, OutTensorS};
+    std::vector<MMAOperation*> Ops = 
+        {&MMACpu, &MMATensor, &MMACudaGM, &MMACuda, &MMACudaH, &MMATemsorS};
+        //{&MMACpu, &MMACudaGM, &MMACuda, &MMATensor, &MMATemsorS};
+    std::vector<float*> OutBuffs = 
+        {OutCPU, OutTensor, OutCudaGM, OutCuda, OutCudaH, OutTensorS};
+        //{OutCPU, OutCudaGM, OutCuda, OutTensor, OutTensorS};
 
-    MakeMatrix(Res, Ops.size() * 3, ExecutionCount, -1.)
-    MakeMatrix(ResRR, Ops.size() * 3, ExecutionCount, -1.)
+    std::vector<const char*> tests = {"Loading","Computing","Outputing"};
+
+    MakeMatrix(Res, Ops.size() * tests.size(), ExecutionCount, -1.)
+    MakeMatrix(ResRR, Ops.size() * tests.size(), ExecutionCount, -1.)
 
     printf("\n");
     printf("Matrixes size,%ld,%ld,\n", N,N);
 
     printf("Single run computation test,\n");
-    printf("Name,preparing time (ms),computation time (ms),gathering restuls time (ms),validity,error mean (to CPU),error deviation (to CPU),\n");
+    printf("Name,preparing time (ms),computation time (ms),gathering restuls time (ms),validity,mean of error (to CPU),deviation of error (to CPU),\n");
 
-    for (size_t i = 0; i < Ops.size(); i++)
+    for (size_t i = 0; i < Ops.size() -1 ; i++)
     {
         printf("%s,", Ops[i]->GetOPTMame());
         BENCH(Ops[i]->Import();)
@@ -121,11 +131,14 @@ void testCycle(size_t N, size_t CPU_threshold, int debugMatrices)
         #pragma omp parallel for shared(is_bad)
         for (size_t j = 0; j < N * N; j++)
         {
-            if (OutCPU[j]!=Out[j])
+            if (OutCPU[j]!=Out[j]) // Now ouptuts the percentage to account for different matrix sizes
             {
                 is_bad = 1;
-                DeviationMap[j] = OutCPU[j] - Out[j];
+                DeviationMap[j] =  abs(Out[j]-OutCPU[j])/(OutCPU[j]);
             }
+            else
+            DeviationMap[j] = 0;
+
         }
         printf("%s,",is_bad ? "False": "True");
         if (!is_bad)
@@ -142,53 +155,40 @@ void testCycle(size_t N, size_t CPU_threshold, int debugMatrices)
         free(DeviationMap);
 
     }
-
     if (debugMatrices)
     {
-        MakeMatrix(OutTensor2, N, N, 0)
-        matrix_multiplication_add_tensor(OutTensor2, A, B, C, N);
         for (size_t i = 0; i < Ops.size(); i++)
         {
-            printf("%s,\n", Ops[i]->GetOPTMame());
-            print_m(OutBuffs[i],N, N);
-        }        
-
-        printf("Tensor comp,");
-        MakeMatrix(DeviationMap, N, N, 0)
-        int is_bad = 0;
-        for (size_t j = 0; j < N * N; j++)
-        {
-            if (OutTensor[j]!=OutTensor2[j])
-            {
-                is_bad = 1;
-                DeviationMap[j] = OutTensor[j] - OutTensor2[j];
-            }
+            printf("%s\n", Ops[i]->GetOPTMame());
+            print_m(OutBuffs[i], N, N);
         }
-        printf("%s,",is_bad ? "False": "True");
-        double mean = getAverage(DeviationMap, N*N);
-        printf("%f,",mean);
-        double deviation = getStdDev(DeviationMap, N*N, mean);
-        printf("%f,",deviation);
-        printf("\n");
-    
+        
     }
+    
 
     printf("\n");
     printf("Multi run computation  test, execution count :%d,\n", ExecutionCount);
-    for (size_t i = N > CPU_threshold ? 1 : 0; i < Ops.size(); i++)
+    for (size_t i = N > CPU_threshold ? 1 : 0; i < Ops.size() - 1; i++)
     {
         
         for (size_t k = 0; k < ExecutionCount; k++)
         {
-            BENCH_STORE(Ops[i]->Import();, Res[(i * 3 + 0)* ExecutionCount + k])
-            BENCH_STORE(Ops[i]->Compute();, Res[(i * 3 + 1)* ExecutionCount + k])
-            BENCH_STORE(Ops[i]->Export();, Res[(i * 3 + 2)* ExecutionCount + k])
+            Res[(i * tests.size() + 0)* ExecutionCount + k] = Ops[i]->Import();
+            Res[(i * tests.size() + 1)* ExecutionCount + k] = Ops[i]->Compute();
+            Res[(i * tests.size() + 2)* ExecutionCount + k] = Ops[i]->Export();
+
         }
         Ops[i]->Cleanup();
+        std::this_thread::sleep_for(std::chrono::seconds(2));
     }
 
     for (size_t i = 0; i < Ops.size(); i++)
-        printf("%s Loading,%s Computing,%s Outputing,", Ops[i]->GetOPTMame(), Ops[i]->GetOPTMame(), Ops[i]->GetOPTMame());
+        for (size_t j = 0; j < tests.size(); j++)
+        {
+            printf("%s %s,", Ops[i]->GetOPTMame(), tests[j]);
+        }
+        
+        
     printf("\n");
     for (size_t i = 0; i < ExecutionCount; i++)
         for (size_t j = 0; j < Ops.size() * 3; j++)
@@ -204,22 +204,26 @@ void testCycle(size_t N, size_t CPU_threshold, int debugMatrices)
     
     printf("\n");
     printf("Multi run computation test (with deallocation), execution count :%d,\n", ExecutionCount);
-    for (size_t i = N > CPU_threshold ? 1 : 0; i < Ops.size(); i++)
+    for (size_t i = N > CPU_threshold ? 1 : 0; i < Ops.size() -1 ; i++)
     {
 
         for (size_t k = 0; k < ExecutionCount; k++)
         {
-            BENCH_STORE(Ops[i]->Import();, ResRR[(i * 3 + 0)* ExecutionCount + k])
-            BENCH_STORE(Ops[i]->Compute();, ResRR[(i * 3 + 1)* ExecutionCount + k])
-            BENCH_STORE(Ops[i]->Export();, ResRR[(i * 3 + 2)* ExecutionCount + k])
+            ResRR[(i * tests.size() + 0)* ExecutionCount + k] = Ops[i]->Import();
+            ResRR[(i * tests.size() + 1)* ExecutionCount + k] = Ops[i]->Compute();
+            ResRR[(i * tests.size() + 2)* ExecutionCount + k] = Ops[i]->Export();
 
             Ops[i]->Cleanup();
         }
+        std::this_thread::sleep_for(std::chrono::seconds(2));
 
     }
 
     for (size_t i = 0; i < Ops.size(); i++)
-        printf("%s Loading,%s Computing,%s Outputing,", Ops[i]->GetOPTMame(), Ops[i]->GetOPTMame(), Ops[i]->GetOPTMame());
+        for (size_t j = 0; j < tests.size(); j++)
+        {
+            printf("%s %s,", Ops[i]->GetOPTMame(), tests[j]);
+        }
     printf("\n");
     for (size_t i = 0; i < ExecutionCount; i++)
         for (size_t j = 0; j < Ops.size() * 3; j++)
@@ -250,13 +254,13 @@ void testCycle(size_t N, size_t CPU_threshold, int debugMatrices)
 
 int main(int argc, char const *argv[])
 {
-    printf("Performing compairasons between CPU Cuda and Tensor implementation,\n");
+    printf("Performing comparisons between CPU Cuda and Tensor implementation,\n");
 
-    std::vector<size_t> sizes = {32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 8192*2};
+    std::vector<size_t> sizes = {512};//{32, 64, 128, 256, 512, 1024, 2048, 4096};//, 8192, 8192*2};
 
     for (size_t size : sizes)
     {
-        testCycle(size, 1025, 0);
+        testCycle(size, 128, 1);
     }
     
 

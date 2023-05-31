@@ -23,13 +23,13 @@
 
 \bibitem{NVIDIA_Tensor_Core_Programmability_KTH}
 S.~Markidis, S.~W.~D. Chien, E.~Laure, I.~B. Peng, and J.~S. Vetter, ``Nvidia
-  tensor core programmability, performance & precision,'' in \emph{2018 IEEE
+  tensor core programmability, performance \& precision,'' in \emph{2018 IEEE
   International Parallel and Distributed Processing Symposium Workshops
   (IPDPSW)}, 2018, pp. 522--531.
 
 \bibitem{Voltatuningguide}
-``{V}olta {T}uning guide,''
-  \url{docs.nvidia.com/cuda/volta-tuning-guide/index.html}, 2017, (Accessed: 31
-  May 2023).
+{N}vidia, ``{V}olta {T}uning guide,''
+  \url{https://docs.nvidia.com/cuda/volta-tuning-guide/index.html}, 2017,
+  (Accessed: 31 May 2023).
 
 \end{thebibliography}

@@ -47,11 +47,11 @@ public:
 
     virtual const char *GetOPTMame();
 
-    void Import();
+    double Import();
 
-    virtual void Compute();
+    virtual double Compute();
 
-    void Export();
+    double Export();
 
     virtual void ComputeNTime(unsigned int loopCount);
 
@@ -70,10 +70,46 @@ public:
 
     const char *GetOPTMame();
 
-    void Compute() override;
+    double Compute() override;
 
     void ComputeNTime(unsigned int loopCount) override;
 
+};
+
+class MMAOptCUDAH : public MMAOperation
+{
+private:
+    unsigned int __matrixSize;
+
+    float *_A;
+    float *_B;
+    float *_C;
+    float *_Out;
+
+    void *d_a = nullptr, *d_b = nullptr;
+    float *d_c = nullptr, *d_out = nullptr;
+
+    const char* name = "MMA CUDA Shared Half";
+
+public:
+    MMAOptCUDAH(float *A, float *B, float *C, float *Out, unsigned int size);
+    
+    ~MMAOptCUDAH()
+    {
+        Cleanup();
+    };
+
+    const char *GetOPTMame();
+
+    double Import();
+
+    double Compute();
+
+    double Export();
+
+    void ComputeNTime(unsigned int loopCount);
+
+    void Cleanup();
 };
 
 #endif

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2023.3.11)  31 MAY 2023 13:50
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2023.3.11)  31 MAY 2023 18:09
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -232,7 +232,14 @@ File: lstmisc.sty 2020/03/24 1.8d (Carsten Heinz)
 File: l3backend-pdftex.def 2022-02-07 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count286
 \l__pdf_internal_box=\box56
-) (./main.aux)
+) (./main.aux
+
+LaTeX Warning: Label `fig:performance-comparison' multiply defined.
+
+
+LaTeX Warning: Label `fig:performance-comparison' multiply defined.
+
+)
 \openout1 = `main.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 29.
@@ -306,39 +313,27 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 <figures/SM.png, id=1, 782.925pt x 441.65pt>
 File: figures/SM.png Graphic file (type png)
 <use figures/SM.png>
-Package pdftex.def Info: figures/SM.png  used on input line 115.
+Package pdftex.def Info: figures/SM.png  used on input line 114.
 (pdftex.def)             Requested size: 250.54112pt x 141.33087pt.
-
-
-LaTeX Warning: Citation `NVIDIA_Tensor_Core_Programmability_KTH' on page 1 undefined on input line 116.
-
-[1{/usr/local/texlive/2022/texmf-var/fonts/map/pdftex/updmap/pdftex.map}
+ [1{/usr/local/texlive/2022/texmf-var/fonts/map/pdftex/updmap/pdftex.map}
 
 
  <./figures/SM.png>]
-
-LaTeX Warning: Citation `Voltatuningguide' on page 2 undefined on input line 163.
-
-LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 206.
-(/usr/local/texlive/2022/texmf-dist/tex/latex/psnfss/ot1pcr.fd
+LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 213.
+ (/usr/local/texlive/2022/texmf-dist/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
-) [2] [3] (./main.bbl
-./main.bbl:26: Misplaced alignment tab character &.
-l.26   tensor core programmability, performance &
-                                                  precision,'' in \emph{2018...
-I can't figure out why you would want to use a tab mark
-here. If you just want an ampersand, the remedy is
-simple: Just type `I\&' now. But if some right brace
-up above has ended a previous alignment prematurely,
-you're probably due for more error messages, and you
-might try typing `S' now just to see what is salvageable.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 31--34
-[]\OT1/ptm/m/n/8 ``Volta Tun-ing guide,'' docs.nvidia.com/cuda/volta-tuning-
- []
-
-)
+) [2]
+<figures/Computational time to matrix size (y-axis logscale).png, id=21, 602.25pt x 372.39125pt>
+File: figures/Computational time to matrix size (y-axis logscale).png Graphic file (type png)
+<use figures/Computational time to matrix size (y-axis logscale).png>
+Package pdftex.def Info: figures/Computational time to matrix size (y-axis logscale).png  used on input line 339.
+(pdftex.def)             Requested size: 228.85738pt x 141.51013pt.
+<figures/SpeedUp compared to Cuda global memory.png, id=22, 602.25pt x 372.39125pt>
+File: figures/SpeedUp compared to Cuda global memory.png Graphic file (type png)
+<use figures/SpeedUp compared to Cuda global memory.png>
+Package pdftex.def Info: figures/SpeedUp compared to Cuda global memory.png  used on input line 346.
+(pdftex.def)             Requested size: 228.85738pt x 141.51013pt.
+ [3] (./main.bbl)
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -350,27 +345,24 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-[4] (./main.aux)
+[4 <./figures/Computational time to matrix size (y-axis logscale).png> <./figures/SpeedUp compared to Cuda global memory.png>] (./main.aux)
 
-LaTeX Warning: There were undefined references.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 6476 strings out of 478268
- 99208 string characters out of 5846347
- 717897 words of memory out of 5000000
- 24601 multiletter control sequences out of 15000+600000
- 507907 words of font info for 102 fonts, out of 8000000 for 9000
+ 6489 strings out of 478268
+ 100043 string characters out of 5846347
+ 718897 words of memory out of 5000000
+ 24613 multiletter control sequences out of 15000+600000
+ 506800 words of font info for 101 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  60i,8n,67p,539b,1710s stack positions out of 10000i,1000n,20000p,200000b,200000s
 {/usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on main.pdf (4 pages, 721464 bytes).
+Output written on main.pdf (4 pages, 756263 bytes).
 PDF statistics:
- 66 PDF objects out of 1000 (max. 8388607)
+ 70 PDF objects out of 1000 (max. 8388607)
  39 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 6 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 16 words of extra memory for PDF output out of 10000 (max. 10000000)
 
