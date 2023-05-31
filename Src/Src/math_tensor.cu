@@ -1,3 +1,4 @@
+#include "benchmarking.hpp"
 #include "math_tensor.hpp"
 #include "math_cuda.hpp"
 #include <stdio.h>
@@ -28,7 +29,7 @@ void vector_add_tensor(float *out, float *a, float *b, int n)
 
 using namespace nvcuda;
 
-#define BLOCK_SIZE 64
+#define BLOCK_SIZE 32
 
 #define WMMA_TILE_SIZE 16
 
@@ -98,7 +99,7 @@ __global__ void mat_mul_add_tensor_shared_mem(half *a, half *b, float *c, float 
     {
         // load into shared memory, coalesced
         a_shared[threadIdx.y *BLOCK_SIZE + threadIdx.x] = a[row*N + i + threadIdx.x];
-        b_shared[threadIdx.y *BLOCK_SIZE + threadIdx.x] = b[i*(N + threadIdx.y) + threadIdx.x];
+        b_shared[threadIdx.y *BLOCK_SIZE + threadIdx.x] = b[i * N +threadIdx.y* BLOCK_SIZE  + threadIdx.x];
         
         // sync before computation
         __syncthreads();
@@ -217,6 +218,7 @@ void matrix_multiplication_add_tensor(float *out, float *a, float *b, float *c, 
     free(t_b);
 }
 
+
 MMAOptTensor::MMAOptTensor(float *A, float *B, float *C, float *Out, unsigned int size) :
         __matrixSize(size),
         _A(A),
@@ -232,8 +234,10 @@ const char *MMAOptTensor::GetOPTMame()
     return name;
 }
 
-void MMAOptTensor::Import()
+double MMAOptTensor::Import()
 {
+    double time;
+    BENCH_STORE(
     half *t_a = (half *)malloc(sizeof(half) * __matrixSize * __matrixSize);
     for (size_t i = 0; i < __matrixSize * __matrixSize; i++)
     {
@@ -259,25 +263,42 @@ void MMAOptTensor::Import()
 
     free(t_a);
     free(t_b);
+    ,time)
+    return time;
 }
 
-void MMAOptTensor::Compute()
+double MMAOptTensor::Compute()
 {
+    
     dim3 gridDim, blockDim;
     // 16 warps in one block
     // 128x4 means we have 16 warps and a block computes a 64x64 output tile
-    blockDim.x = 128;
-    blockDim.y = 4;
+    blockDim.x = 256;
+    blockDim.y = 4;//8
 
     gridDim.x = this->__matrixSize/(blockDim.x/32 * 16);
     gridDim.y = this->__matrixSize/(blockDim.y*16);
 
+    float time;
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    cudaEventRecord(start);
     mat_mul_add_tensor<<<gridDim, blockDim>>>((half*)this->d_a, (half*)this->d_b, this->d_c, this->d_out, this->__matrixSize);
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&time, start, stop);
+    return (double)time;
 }
 
-void MMAOptTensor::Export()
+double MMAOptTensor::Export()
 {
+    double time;
+    BENCH_STORE(
     cudaMemcpy(this->_Out, this->d_out, this->__matrixSize*this->__matrixSize*sizeof(float), cudaMemcpyDeviceToHost);
+    ,time)
+    return time;
 }
 
 void MMAOptTensor::ComputeNTime(unsigned int loopCount)
@@ -324,8 +345,10 @@ const char *MMAOptTensorShared::GetOPTMame()
     return name;
 }
 
-void MMAOptTensorShared::Import()
+double MMAOptTensorShared::Import()
 {
+    double time;
+    BENCH_STORE(
     half *t_a = (half *)malloc(sizeof(half) * __matrixSize * __matrixSize);
     for (size_t i = 0; i < __matrixSize * __matrixSize; i++)
     {
@@ -351,10 +374,13 @@ void MMAOptTensorShared::Import()
 
     free(t_a);
     free(t_b);
+    ,time)
+    return time;
 }
 
-void MMAOptTensorShared::Compute()
+double MMAOptTensorShared::Compute()
 {
+    float time;
     dim3 gridDim, blockDim;
     // 16 warps in one block
     // 128x4 means we have 16 warps and a block computes a 64x64 output tile
@@ -364,12 +390,25 @@ void MMAOptTensorShared::Compute()
     gridDim.x = this->__matrixSize/(blockDim.x/32 * 16);
     gridDim.y = this->__matrixSize/(blockDim.y*16);
 
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    cudaEventRecord(start);
     mat_mul_add_tensor_shared_mem<<<gridDim, blockDim>>>((half*)this->d_a, (half*)this->d_b, this->d_c, this->d_out, this->__matrixSize);
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&time, start, stop);
+    return (double)time;
 }
 
-void MMAOptTensorShared::Export()
+double MMAOptTensorShared::Export()
 {
+    double time;
+    BENCH_STORE(
     cudaMemcpy(this->_Out, this->d_out, this->__matrixSize*this->__matrixSize*sizeof(float), cudaMemcpyDeviceToHost);
+    ,time)
+    return time;
 }
 
 void MMAOptTensorShared::ComputeNTime(unsigned int loopCount)
@@ -377,8 +416,8 @@ void MMAOptTensorShared::ComputeNTime(unsigned int loopCount)
     dim3 gridDim, blockDim;
     // 16 warps in one block
     // 128x4 means we have 16 warps and a block computes a 64x64 output tile
-    blockDim.x = 128;
-    blockDim.y = 4;
+    blockDim.x = 64;
+    blockDim.y = blockDim.x/32;
 
     gridDim.x = this->__matrixSize/(blockDim.x/32 * 16);
     gridDim.y = this->__matrixSize/(blockDim.y*16);

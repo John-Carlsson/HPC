@@ -11,11 +11,11 @@ protected:
 public:
     virtual const char* GetOPTMame() = 0;
 
-    virtual void Import() =  0;
+    virtual double Import() =  0;
 
-    virtual void Compute() = 0;
+    virtual double Compute() = 0;
 
-    virtual void Export() = 0;
+    virtual double Export() = 0;
     
     virtual void ComputeNTime(unsigned int loopCount) = 0;
 

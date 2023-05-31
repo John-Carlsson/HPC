@@ -31,7 +31,7 @@
 \title{Evaluating Tensor Cores}
 
 
-\author{\IEEEauthorblockN{John Carlsson, Cyprien Toulon de Coutex}
+\author{\IEEEauthorblockN{John Carlsson, Cyprien Toulon de Courtex}
 \IEEEauthorblockA{Department of Computer Science\\
  University of Salerno\\
  Italy}
@@ -109,7 +109,6 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   \section{Background}\label{sec:background}
   
   \subsection{Tensor Cores}\label{sec:tensor-cores}
-  
   \begin{figure}[htbp]
     \centering
     \includegraphics[scale=0.32]{figures/SM.png}
@@ -133,7 +132,10 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   
   \subsection{Matrix Multiplication Accumulate (MMA)}\label{sec:mma}
   
-  Matrix Multiplication Accumulate (MMA) is a key operation in many computational tasks, including deep learning, scientific simulations, and image processing. It involves three matrices: two input matrices (A and B) and an output matrix (C). The operation computes the matrix product of A and B and accumulates the result into C.
+  Matrix Multiplication Accumulate (MMA) is a key operation in many computational tasks, including deep 
+  learning, scientific simulations, and image processing. It involves three matrices: two input matrices 
+  (A and B) and an output matrix (C). The operation computes the matrix product of A and B and accumulates 
+  the result into C.
   
   Mathematically, the MMA operation can be defined as follows:
   
@@ -141,7 +143,9 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   
   where A is an m x k matrix, B is a k x N matrix, C is an m x N matrix, and $\alpha$ and $\beta$ are scalar coefficients.
   
-  The MMA operation is computationally intensive and can benefit greatly from hardware acceleration. Tensor Cores, with their ability to efficiently perform MMA operations, offer a promising solution for accelerating this operation.
+  The MMA operation is computationally intensive and can benefit greatly from hardware acceleration. 
+  Tensor Cores, with their ability to efficiently perform MMA operations, offer a promising solution 
+  for accelerating this operation.
   
   \section{Experimental Setup}\label{sec:experimental-setup}
   
@@ -154,6 +158,9 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
 
   we conducted single comparison runs and then multiple runs to get a better average for time and error.
   
+  We also compared Cuda shared memory with half precision to tensor cores. To see the impact of using tensor cores
+  when the inputs are the exact same.
+
   \subsection{Hardware Configuration}\label{sec:hardware-configuration}
   
   The experiments were conducted on a system equipped with an NVIDIA GPU that supports Tensor Cores.
@@ -302,15 +309,24 @@ for (int i = 0; i < N; i += WMMA_K){
 
   \section{Benchmarking Methodology}\label{sec:benchmarking-methodology}
   
-  To evaluate the performance of Tensor Cores, we performed a series of experiments using different matrix sizes and precision settings. For each experiment, we measured the execution time of the MMA operation for CPU, GPU (without Tensor Cores), and GPU (with Tensor Cores) implementations.
+  To evaluate the performance of Tensor Cores, we performed a series of experiments using different 
+  matrix sizes and precision settings. For each experiment, we measured the execution time of the 
+  MMA operation for CPU, GPU (without Tensor Cores), and GPU (with Tensor Cores) implementations.
   
-  We varied the matrix sizes from small to large to analyze the impact of matrix dimensions on performance. Additionally, we tested different precision settings, including full precision (FP32) and mixed precision (FP16).
+  We varied the matrix sizes from small to large to analyze the impact of matrix dimensions on 
+  performance. Additionally, we tested different precision settings, including full precision (FP32)
+  and mixed precision (FP16).
   
-  To ensure accurate measurements, we repeated each experiment multiple times and calculated the average execution time. We also recorded the peak memory usage during each experiment to analyze the memory requirements of Tensor Cores.
+  To ensure accurate measurements, we repeated each experiment multiple times and calculated 
+  the average execution time. We also recorded the peak memory usage during each experiment to 
+  analyze the memory requirements of Tensor Cores.
   
   \section{Results and Analysis}\label{sec:results-analysis}
   
-  In this section, we present the results of our experiments and analyze the performance of Tensor Cores compared to CPU and GPU implementations of MMA.
+  In this section, we present the results of our experiments and analyze the performance of 
+  Tensor Cores compared to CPU and GPU implementations of MMA.
+
+  % insert a bunch of graphs
   
   \subsection{Performance Comparison}\label{sec:performance-comparison}
 
@@ -319,10 +335,17 @@ for (int i = 0; i < N; i += WMMA_K){
   shows the execution time of the MMA operation for different matrix sizes and precision settings.
   
   \begin{figure}[htbp]
-    %\centering
-    %\includegraphics[width=\textwidth]{}
-    %\caption{Performance Comparison of MMA Operation}
-    %\label{fig:performance-comparison}
+    \centering
+    \includegraphics[scale=0.38]{figures/Computational time to matrix size (y-axis logscale).png}
+    \caption{Performance Comparison}
+    \label{fig:performance-comparison}
+  \end{figure}
+
+  \begin{figure}[htbp]
+    \centering
+    \includegraphics[scale=0.38]{figures/SpeedUp compared to Cuda global memory.png}
+    \caption{Relative speedup to cuda with global memory}
+    \label{fig:performance-comparison}
   \end{figure}
   
   From the results, we can observe that the GPU implementation without Tensor Cores outperforms the CPU implementation for all matrix sizes. This is expected, as GPUs are highly parallel processors and can efficiently perform matrix computations. However, the GPU implementation with Tensor Cores significantly outperforms both the CPU and GPU implementations without Tensor Cores, demonstrating the superior performance of Tensor Cores for MMA operations.

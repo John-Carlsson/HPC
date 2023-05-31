@@ -1,4 +1,5 @@
 #include "math_cpu.hpp"
+#include "benchmarking.hpp"
 
 #include <stdlib.h>
 #include <omp.h>
@@ -123,8 +124,10 @@ const char *MMAOptCPU::GetOPTMame()
     return name;
 }
 
-void MMAOptCPU::Import()
+double MMAOptCPU::Import()
 {
+    double time;
+    BENCH_STORE(
     if (_AlignedA == nullptr) _AlignedA = (float*)aligned_alloc(CPU_VECTOR_BYTE_SIZE, _matrixSize * _matrixSize * sizeof(float));
     std::memcpy(_AlignedA, _A, _matrixSize * _matrixSize *sizeof(float));
     if (_AlignedB == nullptr) _AlignedB = (float*)aligned_alloc(CPU_VECTOR_BYTE_SIZE, _matrixSize * _matrixSize * sizeof(float));
@@ -133,23 +136,33 @@ void MMAOptCPU::Import()
     std::memcpy(_AlignedC, _C, _matrixSize * _matrixSize *sizeof(float));
     if (_AlignedOut == nullptr) _AlignedOut = (float*)aligned_alloc(CPU_VECTOR_BYTE_SIZE, _matrixSize * _matrixSize * sizeof(float));
     std::memcpy(_AlignedOut, _Out, _matrixSize * _matrixSize *sizeof(float));
+    ,time)
+    return time;
 }
 
-void MMAOptCPU::Compute()
+double MMAOptCPU::Compute()
 {
-    if(_AlignedA == nullptr) return;
+    if(_AlignedA == nullptr) return -1;
 
     float *AlignedA __ALIGNED = _AlignedA;
     float *AlignedB __ALIGNED = _AlignedB;
     float *AlignedC __ALIGNED = _AlignedC;
     float *AlignedO __ALIGNED = _AlignedOut;
 
+    double time;
+    BENCH_STORE(
     matrix_multiplication_add_cpu_aligned(AlignedO, AlignedA, AlignedB, AlignedC, _matrixSize);
+    ,time)
+    return time;
 }
 
-void MMAOptCPU::Export()
+double MMAOptCPU::Export()
 {
+    double time;
+    BENCH_STORE(
     std::memcpy(_Out, _AlignedOut, _matrixSize * _matrixSize *sizeof(float));
+    ,time)
+    return time;
 }
 
 void MMAOptCPU::ComputeNTime(unsigned int loopCount)
