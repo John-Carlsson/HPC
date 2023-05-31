@@ -117,11 +117,19 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
     \label{fig:performance-comparison}
   \end{figure}
 
-  Tensor Cores are specialized hardware units introduced in NVIDIA GPUs that are designed to accelerate matrix computations, specifically matrix multiplications and convolutions. They leverage mixed-precision arithmetic, combining high throughput with reduced precision to achieve significant speedups in tensor operations.
+  Tensor Cores are specialized hardware units introduced in NVIDIA GPUs that are designed to accelerate matrix computations, 
+  specifically matrix multiplications and convolutions. They leverage mixed-precision arithmetic, 
+  combining high throughput with reduced precision to achieve significant speedups in tensor operations.
   
-  The key feature of Tensor Cores is their ability to perform mixed-precision operations using half-precision floating-point (FP16) data types. By using FP16, Tensor Cores can process a larger number of elements simultaneously, leading to improved throughput. Additionally, Tensor Cores support automatic data type conversion, allowing for seamless integration with higher-precision data types used in deep learning frameworks.
+  The key feature of Tensor Cores is their ability to perform mixed-precision operations using 
+  half-precision floating-point (FP16) data types. By using FP16, Tensor Cores can process a larger 
+  number of elements simultaneously, leading to improved throughput. 
   
-  Tensor Cores operate on 4x4 matrix tiles, performing matrix multiplication and accumulation (MMA) operations. These operations are highly parallel and can be efficiently executed on Tensor Cores. By exploiting the parallelism of Tensor Cores and their ability to process multiple elements simultaneously, significant performance gains can be achieved compared to traditional GPU implementations.
+  Tensor Cores operate on 4x4 matrix tiles, performing matrix multiplication and accumulation (MMA) 
+  operations. These operations are highly parallel and can be efficiently executed on Tensor Cores. 
+  By exploiting the parallelism of Tensor Cores and their ability to process multiple elements 
+  simultaneously, significant performance gains can be achieved compared to traditional GPU 
+  implementations.
   
   \subsection{Matrix Multiplication Accumulate (MMA)}\label{sec:mma}
   
@@ -137,22 +145,36 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   
   \section{Experimental Setup}\label{sec:experimental-setup}
   
-  In this section, we describe the experimental setup used to evaluate Tensor Cores and compare their performance with CPU and GPU implementations of MMA.
+  In this section, we describe the experimental setup used to evaluate 
+  Tensor Cores and compare their performance with CPU and GPU implementations of MMA.
+  We did a multitude of tests with different parameters to see how performance scale over matrix size
+  and how conducting many runs consequently affects performance over time.
+
+  We used matrix sizes of 32, 64, 128, 256, 512, 1024, 2048, and 4096.
+
+  we conducted single comparison runs and then multiple runs to get a better average for time and error.
   
   \subsection{Hardware Configuration}\label{sec:hardware-configuration}
   
-  The experiments were conducted on a system equipped with an NVIDIA GPU that supports Tensor Cores. The specific GPU model is seen below. %\ref{tab:gpu-specs}. 
+  The experiments were conducted on a system equipped with an NVIDIA GPU that supports Tensor Cores.
+  The specific GPU model is seen below. The GPU belongs to a group of compute capability 7.5. 
   
   \begin{table}[htbp]
-  \caption{GPU Specifications}\label{tab:gpu-specs}
+  \caption{GPU Specifications\cite{Voltatuningguide}}
   \centering
     \begin{tabular}{|c|c|}
     \hline
     GPU Model & NVIDIA Quadro 4000 RTX \\
     \hline
+    Streamlline Multiprocessors (SM) & 4 \\
+    \hline
+    Threadblocks per SM & 32 \\
+    \hline
     Shared memory per threadblock & 64 Kb \\
     \hline
-    RAM & 8 GB \\
+    Warps per threadblock & 32 \\
+    \hline
+    Threads per warp & 32 \\
     \hline
   \end{tabular}
   \end{table}
@@ -167,7 +189,7 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
     \item C++17 compiled with g++ 11.3.0
   \end{itemize}
   
-  We implemented the MMA operation using different implementations: CPU, GPU (without Tensor Cores), and GPU (with Tensor Cores). 
+  We implemented the MMA operation in different ways: CPU, GPU (without Tensor Cores), and GPU (with Tensor Cores). 
   The CPU implementation was written in C++, while the GPU implementations were developed using CUDA.
 
   

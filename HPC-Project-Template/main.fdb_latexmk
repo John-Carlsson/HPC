@@ -2,12 +2,12 @@
 ["bibtex main"] 0 "main.aux" "main.bbl" "main" 0
   "./IEEEtran.bst" 1440622570 57748 7c8250ecf02814ce6ddc0cdbb63df1dd ""
   "main.aux" 0 -1 0 "pdflatex"
-  "sources.bib" 1684220123 825 ceaf2b58b61f250beb3bb08275cef425 ""
+  "sources.bib" 1685533010 1013 1e462bc165a555aa250abcb27fa7e7bb ""
   (generated)
   "main.bbl"
   "main.blg"
-["pdflatex"] 1685460272 "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" "main.pdf" "main" 1685460272
-  "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" 1685460271 18051 1767ac9f61fe014e2e4101b7d0b76969 ""
+["pdflatex"] 1685533809 "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" "main.pdf" "main" 1685533809
+  "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" 1685533808 18442 d7546f90dd03286c3394adc017aaa199 ""
   "/usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2022/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2022/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1136768653 960 379cc0019370a9e0208a0a3f949f847a ""
@@ -92,9 +92,9 @@
   "/usr/local/texlive/2022/texmf-var/web2c/pdftex/pdflatex.fmt" 1678553808 2826450 8b9a1f4cf6f0318c113ff4fac3b4757f ""
   "/usr/local/texlive/2022/texmf.cnf" 1647878952 577 209b46be99c9075fd74d4c0369380e8c ""
   "figures/SM.png" 1684216942 783463 e35ad188357e1fa8bc72e653b69261af ""
-  "main.aux" 1685460272 32 3985256e7290058c681f74d7a3565a19 "pdflatex"
-  "main.bbl" 1685460271 1188 101ce34fdf34c9bf51b525eebd5768ea "bibtex main"
-  "main.tex" 1685460271 18051 1767ac9f61fe014e2e4101b7d0b76969 ""
+  "main.aux" 1685533809 32 3985256e7290058c681f74d7a3565a19 "pdflatex"
+  "main.bbl" 1685533808 1337 7ffe4d63e229c283a69b28b8524d78cb "bibtex main"
+  "main.tex" 1685533808 18442 d7546f90dd03286c3394adc017aaa199 ""
   (generated)
   "main.aux"
   "main.log"
