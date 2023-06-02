@@ -1,13 +1,13 @@
 # Fdb version 3
-["bibtex main"] 1685694641 "main.aux" "main.bbl" "main" 1685694642
+["bibtex main"] 1685696254 "main.aux" "main.bbl" "main" 1685696397
   "./IEEEtran.bst" 1440622570 57748 7c8250ecf02814ce6ddc0cdbb63df1dd ""
-  "main.aux" 1685694642 4449 351bf602f4faf9bf4d3dd6363800e38c "pdflatex"
+  "main.aux" 1685696397 4295 378b9f78f09e2c51dcee932cca5c8ef1 "pdflatex"
   "sources.bib" 1685536498 1044 b7acfbe70d9ddd43802812d9ac3843a6 ""
   (generated)
   "main.bbl"
   "main.blg"
-["pdflatex"] 1685694641 "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" "main.pdf" "main" 1685694642
-  "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" 1685694639 18349 25e5c0a828dc926cb944ffa0df8b4923 ""
+["pdflatex"] 1685696395 "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" "main.pdf" "main" 1685696397
+  "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" 1685696395 16476 18ed5c1f502e59aeb1584a29c902e92c ""
   "/usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2022/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2022/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1136768653 960 379cc0019370a9e0208a0a3f949f847a ""
@@ -96,9 +96,9 @@
   "figures/Relative speed up to Cuda.png" 1685690477 19698 d07fe8d9e822501027e4d45644e5b345 ""
   "figures/SM.png" 1684216942 783463 e35ad188357e1fa8bc72e653b69261af ""
   "figures/Tot_time_dealloc.png" 1685688928 54688 a68e2df7cd1edad405f688d850d7492e ""
-  "main.aux" 1685694642 4449 351bf602f4faf9bf4d3dd6363800e38c "pdflatex"
-  "main.bbl" 1685694641 1356 181549dd29ea60486cacfdbfb6e7e127 "bibtex main"
-  "main.tex" 1685694639 18349 25e5c0a828dc926cb944ffa0df8b4923 ""
+  "main.aux" 1685696397 4295 378b9f78f09e2c51dcee932cca5c8ef1 "pdflatex"
+  "main.bbl" 1685696255 1356 181549dd29ea60486cacfdbfb6e7e127 "bibtex main"
+  "main.tex" 1685696395 16476 18ed5c1f502e59aeb1584a29c902e92c ""
   (generated)
   "main.aux"
   "main.log"
