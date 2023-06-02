@@ -336,21 +336,28 @@ for (int i = 0; i < N; i += WMMA_K){
   
   \begin{figure}[htbp]
     \centering
-    \includegraphics[scale=0.38]{figures/Computational time to matrix size (y-axis logscale).png}
+    \includegraphics[scale=0.4]{figures/Comp_time.png}
     \caption{Performance Comparison}
     \label{fig:performance-comparison}
   \end{figure}
 
   \begin{figure}[htbp]
     \centering
-    \includegraphics[scale=0.38]{figures/SpeedUp compared to Cuda global memory.png}
-    \caption{Relative speedup to cuda with global memory}
+    \includegraphics[scale=0.4]{figures/Tot_time_dealloc.png}
+    \caption{Performance Comparison total time with deallocation}
+    \label{fig:time-comparison}
+  \end{figure}
+
+
+
+  \begin{figure}[htbp]
+    \centering
+    \includegraphics[scale=0.38]{figures/Relative speed up to Cuda.png}
+    \caption{Relative speedup to CUDA with global memory}
     \label{fig:performance-comparison}
   \end{figure}
   
-  From the results, we can observe that the GPU implementation without Tensor Cores outperforms the CPU implementation for all matrix sizes. This is expected, as GPUs are highly parallel processors and can efficiently perform matrix computations. However, the GPU implementation with Tensor Cores significantly outperforms both the CPU and GPU implementations without Tensor Cores, demonstrating the superior performance of Tensor Cores for MMA operations.
-  
-  We also observe that the performance of Tensor Cores is influenced by the matrix size. As the matrix size increases, the speedup achieved by Tensor Cores becomes more pronounced. This is because larger matrices can exploit the parallelism of Tensor Cores more effectively, resulting in higher throughput.
+  ANALYSIS
   
   \subsection{Impact of Precision}\label{sec:impact-precision}
   
@@ -358,10 +365,10 @@ for (int i = 0; i < N; i += WMMA_K){
   Next, we analyze the impact of precision on the performance of Tensor Cores. Figure %\ref{fig:precision-impact} illustrates the execution time of the MMA operation for different precision settings using Tensor Cores.
   
   \begin{figure}[htbp]
-    %\centering
-    %\includegraphics[width=\textwidth]{}
-    %\caption{Impact of Precision on Tensor Cores Performance}
-    %\label{fig:precision-impact}
+    \centering
+    \includegraphics[scale=0.38]{figures/Error to CPU.png}
+    \caption{Impact of Precision on Tensor Cores Performance}
+    \label{fig:precision-impact}
   \end{figure}
   
   The results show that using mixed precision (FP16) with Tensor Cores can provide significant performance improvements compared to full precision (FP32).

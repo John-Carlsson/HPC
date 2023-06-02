@@ -78,7 +78,7 @@ public:
 
 class MMAOptCUDAH : public MMAOperation
 {
-private:
+protected:
     unsigned int __matrixSize;
 
     float *_A;
@@ -89,7 +89,7 @@ private:
     void *d_a = nullptr, *d_b = nullptr;
     float *d_c = nullptr, *d_out = nullptr;
 
-    const char* name = "MMA CUDA Shared Half";
+    const char* name = "MMA CUDA Shared Half Rect Tiling 32*64";
 
 public:
     MMAOptCUDAH(float *A, float *B, float *C, float *Out, unsigned int size);
@@ -99,17 +99,65 @@ public:
         Cleanup();
     };
 
-    const char *GetOPTMame();
+    virtual const char *GetOPTMame();
 
     double Import();
 
-    double Compute();
+    virtual double Compute();
 
     double Export();
 
     void ComputeNTime(unsigned int loopCount);
 
     void Cleanup();
+};
+
+class MMAOptCUDASF16 : public MMAOptCUDA
+{
+private:
+    const char* name = "MMA CUDA Shared 16 Tile";
+
+public:
+    MMAOptCUDASF16(float *A, float *B, float *C, float *Out, unsigned int size):
+        MMAOptCUDA(A,B,C,Out,size)
+    {}
+
+    const char *GetOPTMame();
+
+    double Compute() override;
+
+};
+
+class MMAOptCUDAH2 : public MMAOptCUDAH
+{
+private:
+    const char* name = "MMA CUDA Shared Half Rect Tiling 32*96";
+
+public:
+    MMAOptCUDAH2(float *A, float *B, float *C, float *Out, unsigned int size):
+        MMAOptCUDAH(A,B,C,Out,size)
+    {}
+
+    const char *GetOPTMame();
+
+    double Compute() override;
+
+};
+
+class MMAOptCUDASH32 : public MMAOptCUDAH
+{
+private:
+    const char* name = "MMA CUDA Shared Halfs 32 Tile";
+
+public:
+    MMAOptCUDASH32(float *A, float *B, float *C, float *Out, unsigned int size):
+        MMAOptCUDAH(A,B,C,Out,size)
+    {}
+
+    const char *GetOPTMame();
+
+    double Compute() override;
+
 };
 
 #endif

@@ -29,7 +29,7 @@ void vector_add_tensor(float *out, float *a, float *b, int n)
 
 using namespace nvcuda;
 
-#define BLOCK_SIZE 32
+
 
 #define WMMA_TILE_SIZE 16
 
@@ -65,7 +65,7 @@ __global__ void mat_mul_add_tensor(half *a, half *b, float *c, float *d, int N)
     wmma::store_matrix_sync(d + cCol + cRow * N, c_frag, N, wmma::mem_row_major);
 }
 
-
+#define BLOCK_SIZE 32
 __global__ void mat_mul_add_tensor_shared_mem(half *a, half *b, float *c, float *d, int N)
 {
     __shared__ half a_shared [BLOCK_SIZE * BLOCK_SIZE];
@@ -384,8 +384,8 @@ double MMAOptTensorShared::Compute()
     dim3 gridDim, blockDim;
     // 16 warps in one block
     // 128x4 means we have 16 warps and a block computes a 64x64 output tile
-    blockDim.x = 128;
-    blockDim.y = 4;
+    blockDim.x = 64;
+    blockDim.y = 2;
 
     gridDim.x = this->__matrixSize/(blockDim.x/32 * 16);
     gridDim.y = this->__matrixSize/(blockDim.y*16);
