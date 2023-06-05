@@ -124,11 +124,14 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   half-precision floating-point (FP16) data types. By using FP16, tensor cores can process a larger 
   number of elements simultaneously, leading to improved throughput. 
   
-  tensor cores operate on 4x4 matrix tiles, performing matrix multiplication and accumulation (MMA) 
+  tensor cores operate on up to 16x16 matrix tiles, performing matrix multiplication and accumulation (MMA) 
   operations. These operations are highly parallel and can be efficiently executed on tensor cores. 
   By exploiting the parallelism of tensor cores and their ability to process multiple elements 
   simultaneously, significant performance gains can be achieved compared to traditional GPU 
   implementations.
+
+  The tensor operations are warp wize, this means that each tensor instructions must work on the same 
+  data within the same warp.
   
   \subsection{Matrix Multiplication Accumulate (MMA)}\label{sec:mma}
   
@@ -154,12 +157,12 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   We did a multitude of tests with different parameters to see how performance scale over matrix size
   and how conducting many runs consequently affects performance over time.
 
-  We used matrix sizes of 32, 64, 128, 256, 512, 1024, 2048, and 4096.
+  We used square matrices with the sizes of 32, 64, 128, 256, 512, 1024, 2048, 4096 and 8192.
 
   we conducted single comparison runs and then multiple runs to get a better average for time and error.
   
-  We also compared Cuda shared memory with half precision to tensor cores. To see the impact of using tensor cores
-  when the inputs are the exact same.
+  To understand the effect of each optimization methods, we produced different implementations, exploiting 
+  Cuda, shared memory, tensor cores, etc.
 
   \subsection{Hardware Configuration}\label{sec:hardware-configuration}
   
@@ -198,6 +201,17 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   \section{Code}
   In this section we present the main part of the code. The code shown is the computational part. Since this is
   deemed most important. We show here the Cuda code and the tensor code.
+
+  \subsection{CPU code}\label{sec:CPUCode}
+  We implement a CPU version of the MMA operation to have a reference to verify our computation results.
+  The CPU code is an implement of the MMA operation that uses the following optimizations:
+  \begin{enumerate}
+    \item tiling
+    \item parallelisation using OpenMP
+    \item compiler vectorisation for AVX512 using OpenMP
+    \item compiler optimization flags
+  \end{enumerate}
+
 
   \subsection{Cuda code}\label{sec:CudaCode}
   The code is heavily simplified to keep the essence. For full code, see appendix.
