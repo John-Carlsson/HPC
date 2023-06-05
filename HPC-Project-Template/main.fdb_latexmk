@@ -1,13 +1,13 @@
 # Fdb version 3
-["bibtex main"] 1685549360 "main.aux" "main.bbl" "main" 1685549362
+["bibtex main"] 1685983858 "main.aux" "main.bbl" "main" 1685983890
   "./IEEEtran.bst" 1440622570 57748 7c8250ecf02814ce6ddc0cdbb63df1dd ""
-  "main.aux" 1685549361 4066 8cd81a0aaa125b1de506e022a802a5e3 "pdflatex"
+  "main.aux" 1685983889 4295 c3053b57dea99ee8bc43fe14785a6623 "pdflatex"
   "sources.bib" 1685536498 1044 b7acfbe70d9ddd43802812d9ac3843a6 ""
   (generated)
   "main.bbl"
   "main.blg"
-["pdflatex"] 1685549360 "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" "main.pdf" "main" 1685549362
-  "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" 1685549359 18931 1a777d8ab7b01fc6eca2220a02241595 ""
+["pdflatex"] 1685983888 "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" "main.pdf" "main" 1685983890
+  "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" 1685983888 16490 423845acf98c4e8ef2ccaf9920a98220 ""
   "/usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2022/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2022/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1136768653 960 379cc0019370a9e0208a0a3f949f847a ""
@@ -91,12 +91,14 @@
   "/usr/local/texlive/2022/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1647878959 4410336 7d30a02e9fa9a16d7d1f8d037ba69641 ""
   "/usr/local/texlive/2022/texmf-var/web2c/pdftex/pdflatex.fmt" 1678553808 2826450 8b9a1f4cf6f0318c113ff4fac3b4757f ""
   "/usr/local/texlive/2022/texmf.cnf" 1647878952 577 209b46be99c9075fd74d4c0369380e8c ""
-  "figures/Computational time to matrix size (y-axis logscale).png" 1685549139 27941 2672efe0ef44f5a24dc02a80ce2a31c5 ""
+  "figures/Comp_time.png" 1685980096 76223 a574028a65663aa58679ad99fb0a242f ""
+  "figures/Mean of error compared to CPU.png" 1685983771 21630 9b86ac657b4a8fdc63a48fa698b0bef9 ""
+  "figures/Relative speed up to Cuda.png" 1685981550 30690 2d3c4bdd43b83a1120e4d4ad5bf09e48 ""
   "figures/SM.png" 1684216942 783463 e35ad188357e1fa8bc72e653b69261af ""
-  "figures/SpeedUp compared to Cuda global memory.png" 1685549128 15337 dfaa303bac3aa56f7b03bad1464e39ff ""
-  "main.aux" 1685549361 4066 8cd81a0aaa125b1de506e022a802a5e3 "pdflatex"
-  "main.bbl" 1685549360 1356 181549dd29ea60486cacfdbfb6e7e127 "bibtex main"
-  "main.tex" 1685549359 18931 1a777d8ab7b01fc6eca2220a02241595 ""
+  "figures/Tot_time_deac.png" 1685981685 63704 72f2ad71bcf7ecfcf72728675bc1a9ce ""
+  "main.aux" 1685983889 4295 c3053b57dea99ee8bc43fe14785a6623 "pdflatex"
+  "main.bbl" 1685983859 1356 181549dd29ea60486cacfdbfb6e7e127 "bibtex main"
+  "main.tex" 1685983888 16490 423845acf98c4e8ef2ccaf9920a98220 ""
   (generated)
   "main.aux"
   "main.log"

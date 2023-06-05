@@ -430,16 +430,26 @@ INPUT /usr/local/texlive/2022/texmf-dist/fonts/vf/adobe/times/ptmrc7t.vf
 INPUT /usr/local/texlive/2022/texmf-dist/fonts/tfm/adobe/times/ptmr8r.tfm
 INPUT /usr/local/texlive/2022/texmf-dist/fonts/vf/adobe/courier/pcrr7t.vf
 INPUT /usr/local/texlive/2022/texmf-dist/fonts/tfm/adobe/courier/pcrr8r.tfm
-INPUT ./figures/Computational time to matrix size (y-axis logscale).png
-INPUT ./figures/Computational time to matrix size (y-axis logscale).png
-INPUT figures/Computational time to matrix size (y-axis logscale).png
-INPUT ./figures/Computational time to matrix size (y-axis logscale).png
-INPUT ./figures/Computational time to matrix size (y-axis logscale).png
-INPUT ./figures/SpeedUp compared to Cuda global memory.png
-INPUT ./figures/SpeedUp compared to Cuda global memory.png
-INPUT figures/SpeedUp compared to Cuda global memory.png
-INPUT ./figures/SpeedUp compared to Cuda global memory.png
-INPUT ./figures/SpeedUp compared to Cuda global memory.png
+INPUT ./figures/Comp_time.png
+INPUT ./figures/Comp_time.png
+INPUT figures/Comp_time.png
+INPUT ./figures/Comp_time.png
+INPUT ./figures/Comp_time.png
+INPUT ./figures/Tot_time_deac.png
+INPUT ./figures/Tot_time_deac.png
+INPUT figures/Tot_time_deac.png
+INPUT ./figures/Tot_time_deac.png
+INPUT ./figures/Tot_time_deac.png
+INPUT ./figures/Relative speed up to Cuda.png
+INPUT ./figures/Relative speed up to Cuda.png
+INPUT figures/Relative speed up to Cuda.png
+INPUT ./figures/Relative speed up to Cuda.png
+INPUT ./figures/Relative speed up to Cuda.png
+INPUT ./figures/Mean of error compared to CPU.png
+INPUT ./figures/Mean of error compared to CPU.png
+INPUT figures/Mean of error compared to CPU.png
+INPUT ./figures/Mean of error compared to CPU.png
+INPUT ./figures/Mean of error compared to CPU.png
 INPUT ./main.bbl
 INPUT main.bbl
 INPUT ./main.bbl

@@ -74,60 +74,18 @@ __global__ void mat_mul_add_global_mem(Out *out, In *a, In *b, Out *c, int n)
     out[task_idy*n+task_idx] = c[task_idy*n+task_idx] + value;
 }
 
-/*
-template<typename In, typename Out, unsigned int TILE_SIZE_X, unsigned int TILE_SIZE_Y>
+template<typename In, typename Out, unsigned int TILE_SIZE>
 __global__ void mat_mul_add(Out *out, In *A, In *B, Out *c, int n)
 {
-    __shared__ float a_shared [TILE_SIZE_X][TILE_SIZE_Y];
-    __shared__ float b_shared [TILE_SIZE_Y][TILE_SIZE_Y];
-    
-    // The kernel/thread global id, row i of left matrix
-    unsigned int row = blockIdx.y * blockDim.y + threadIdx.y;
-    unsigned int col = blockIdx.x * blockDim.x + threadIdx.x;
-
-    Out sum_acc = row < n || col < n ? c[row*n + col] : 0;
-    unsigned int tile_offset = threadIdx.x/TILE_SIZE_Y;
-
-    // Loop over the tiles
-    for (int tileNum = 0; tileNum < n / TILE_SIZE_Y; tileNum++)
-    {   
-        
-        
-        // j is the column index of the left matrix
-        int j = ((tileNum* TILE_SIZE_X/TILE_SIZE_Y) + tile_offset)*TILE_SIZE_Y + threadIdx.x;
-        int i = tileNum*TILE_SIZE_Y + threadIdx.y;
-
-        // load into shared memory, coalesced
-        a_shared[threadIdx.y][threadIdx.x] = A[row*n + j];//row < n || j < n ? A[row*n + j] : 0;
-        b_shared[threadIdx.y][threadIdx.x] = B[i*n + col];//col < n || i < n ? B[i*n + col] : 0;
-        
-        // sync before computation
-        __syncthreads();
-        
-
-
-        for (int k = 0; k < TILE_SIZE_Y; k++)
-        {
-            c[row*n + col] += (Out) a_shared[threadIdx.y][k] * b_shared[k][threadIdx.x];
-            
-        }
-    __syncthreads();
-    out[row*n + col] = c[row*n + col];
-}
-*/
-
-template<typename In, typename Out, unsigned int TILE_SIZE_Y, unsigned int TILE_SIZE>
-__global__ void mat_mul_add(Out *out, In *A, In *B, Out *c, int n)
-{
-    __shared__ In a_shared [TILE_SIZE_Y][TILE_SIZE];
+    __shared__ In a_shared [TILE_SIZE][TILE_SIZE];
     __shared__ In b_shared [TILE_SIZE][TILE_SIZE];
     
     // The kernel/thread global id, row i of left matrix
     unsigned int row = blockIdx.y * blockDim.y + threadIdx.y;
     unsigned int col = blockIdx.x * blockDim.x + threadIdx.x;
 
-    Out sum_acc = row < n && col < n ? c[row*n + col] : 0;
 
+    Out sum_acc = row < n && col < n ? c[row*n + col] : 0;
     for (size_t tileNum = 0; tileNum < n/TILE_SIZE; tileNum++)
     {
 
@@ -136,9 +94,8 @@ __global__ void mat_mul_add(Out *out, In *A, In *B, Out *c, int n)
         int i = tileNum*TILE_SIZE + threadIdx.y;
 
         // load into shared memory, coalesced
-        a_shared[threadIdx.y][threadIdx.x] = (row < n && j < n) ? A[row*n + j] : (In)0;
-        if(threadIdx.y < TILE_SIZE)
-            b_shared[threadIdx.y][threadIdx.x] = (col < n && i < n) ? B[i*n + col] : (In)0;
+        a_shared[threadIdx.y][threadIdx.x] = A[row*n + j];
+        b_shared[threadIdx.y][threadIdx.x] = B[i*n + col];
         
         __syncthreads();
 
@@ -151,38 +108,78 @@ __global__ void mat_mul_add(Out *out, In *A, In *B, Out *c, int n)
 
     out[row*n + col] = sum_acc;
     
-/*
-    // Loop over the tiles
-    for (int tileNum = 0; tileNum < n / TILE_SIZE_Y; tileNum++)
-    {   
-        
-        
-        // j is the column index of the left matrix
-        int j = ((tileNum* TILE_SIZE_X/TILE_SIZE_Y) + tile_offset)*TILE_SIZE_Y + threadIdx.x;
-        int i = tileNum*TILE_SIZE_Y + threadIdx.y;
+}   
 
-        // load into shared memory, coalesced
-        a_shared[threadIdx.y][threadIdx.x] = A[row*n + j];//row < n || j < n ? A[row*n + j] : 0;
-        b_shared[threadIdx.y][threadIdx.x] = B[i*n + col];//col < n || i < n ? B[i*n + col] : 0;
-        
-        // sync before computation
-        __syncthreads();
-        
+template<typename In, typename Out, unsigned int TILE_SIZE, unsigned int FACTOR>
+__global__ void mat_mul_add_rect(Out *out, In *A, In *B, Out *c, int n)
+{
+    __shared__ In a_shared [FACTOR][TILE_SIZE][TILE_SIZE];
+    __shared__ In b_shared [TILE_SIZE][TILE_SIZE];
+    
+    // The kernel/thread global id, row i of left matrix
+    unsigned int row = blockIdx.y * blockDim.y * FACTOR + threadIdx.y;
+    unsigned int col = blockIdx.x * blockDim.x + threadIdx.x;
 
+    Out accs[FACTOR];
+    for (unsigned int subthread = 0; subthread < FACTOR; subthread++)
+        accs[subthread] = c[(row + TILE_SIZE * subthread)*n + col];
 
-        for (int k = 0; k < TILE_SIZE_Y; k++)
+    for (unsigned int tileNum = 0; tileNum < n/TILE_SIZE; tileNum++)
+    {
+        unsigned int BRow = tileNum*TILE_SIZE + threadIdx.y;
+        unsigned int BCol = col;
+
+        b_shared[threadIdx.y][threadIdx.x] = (BRow < n && BCol < n) ? B[BRow*n + BCol] : (In)0;
+        for (unsigned int subthread = 0; subthread < FACTOR; subthread++)
         {
-            c[row*n + col] += (Out) a_shared[threadIdx.y][k] * b_shared[k][threadIdx.x];
-            
+            unsigned int ARow = row + TILE_SIZE * subthread;
+            unsigned int ACol = tileNum*TILE_SIZE + threadIdx.x;
+            a_shared[subthread][threadIdx.y][threadIdx.x] = (ARow < n && ACol < n) ? A[ARow*n + ACol] : (In)0;
+            //printf("%d %d %d %d %d\n",subthread, row, col, ARow, ACol);
         }
         __syncthreads();
-        out[row*n + col] = c[row*n + col];
-    
+        for (unsigned int subthread = 0; subthread < FACTOR; subthread++)
+            for (int k = 0; k < TILE_SIZE; k++)
+            {
+                accs[subthread] += (Out)(a_shared[subthread][threadIdx.y][k] * b_shared[k][threadIdx.x]);
+            }
     }
-    */
+    for (unsigned int subthread = 0; subthread < FACTOR; subthread++)
+        out[(row + TILE_SIZE * subthread)*n + col] = accs[subthread];
+
+
+    /*
+    const unsigned int ratio = TILE_SIZE_Y/TILE_SIZE;
+
+    for (unsigned int tileNumYA = 0; tileNumYA < n/(TILE_SIZE * FACTOR); tileNumYA++)
+    {
+        for (unsigned int tileNum  = 0; tileNum < FACTOR; tileNum++)
+        {
+            unsigned int ARow = row + TILE_SIZE * tileNum;
+            unsigned int ACol = (tileNumYA * ratio + tileNum)*TILE_SIZE + threadIdx.x;
+            unsigned int BRow = (tileNumYA * ratio + tileNum)*TILE_SIZE + threadIdx.y;
+            unsigned int BCol = col;
+
+            a_shared[tileNum][threadIdx.y][threadIdx.x] = (ARow < n && ACol < n) ? A[ARow*n + ACol] : (In)0;
+            if (!tileNum)
+                b_shared[threadIdx.y][threadIdx.x] = (BRow < n && BCol < n) ? B[BRow*n + BCol] : (In)0;
+
+            __syncthreads();
+        }
+        for (unsigned int tileNum = 0; tileNum < ratio; tileNum++)
+            for (int k = 0; k < TILE_SIZE; k++)
+            {
+                accs[tileNum] += (Out)(a_shared[tileNum][threadIdx.y][k] * b_shared[k][threadIdx.x]);
+                
+            }
+    }
+    for (unsigned int tileNum = 0; tileNum < ratio; tileNum++)
+        out[(row + TILE_SIZE * tileNum)*n + col] = accs[tileNum];
+*/
 }   
         
 #endif
+
 
 void vector_add_cuda(float *out, float *a, float *b, int n)
 {
@@ -240,7 +237,7 @@ void matrix_multiplication_add_cuda(float *out, float *a, float *b, float *c, in
 #elif   MAT_MUL_ADD_ITERATION == 2
     dim3 numblocks(n/32,n/32);
     dim3 thread_per_block(32,32);
-    mat_mul_add<float, float, 32, 32><<<numblocks, thread_per_block>>>(d_out, d_a, d_b, d_c, n);
+    mat_mul_add<float, float, 32><<<numblocks, thread_per_block>>>(d_out, d_a, d_b, d_c, n);
 #elif   MAT_MUL_ADD_ITERATION == 3
     dim3 gridDim, blockDim;
 	// 16 warps in one block
@@ -312,7 +309,7 @@ double MMAOptCUDA::Compute()
     cudaEventCreate(&stop);
 
     cudaEventRecord(start);
-    mat_mul_add<float, float, 32, 32><<<gridDim, blockDim>>>(this->d_out, this->d_a, this->d_b, this->d_c, this->__matrixSize);
+    mat_mul_add<float, float, 32><<<gridDim, blockDim>>>(this->d_out, this->d_a, this->d_b, this->d_c, this->__matrixSize);
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&time, start, stop);
@@ -341,7 +338,7 @@ void MMAOptCUDA::ComputeNTime(unsigned int loopCount)
     gridDim.y = (this->__matrixSize/blockDim.y);
     for (unsigned int i = 0; i < loopCount; i++)
     {
-        mat_mul_add<float, float, 16, 16><<<gridDim, blockDim>>>(this->d_out, this->d_a, this->d_b, this->d_c, this->__matrixSize);
+        mat_mul_add<float, float, 16><<<gridDim, blockDim>>>(this->d_out, this->d_a, this->d_b, this->d_c, this->__matrixSize);
     }
     
 }
@@ -395,7 +392,6 @@ const char *MMAOptCUDAGlobMem::GetOPTMame()
 {
     return name;
 }
-
 
 MMAOptCUDAH::MMAOptCUDAH(float *A, float *B, float *C, float *Out, unsigned int size) :
         __matrixSize(size),
@@ -452,17 +448,17 @@ double MMAOptCUDAH::Compute()
     dim3 gridDim, blockDim;
 	// 16 warps in one block
 	blockDim.x = 32;
-    blockDim.y = 96;
+    blockDim.y = 32;
 
     gridDim.x = (this->__matrixSize/blockDim.x);
-    gridDim.y = (this->__matrixSize/blockDim.y);
+    gridDim.y = (this->__matrixSize/(blockDim.y*2));
 
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
 
     cudaEventRecord(start);
-    mat_mul_add<half, float, 96, 32><<<gridDim, blockDim>>>(d_out, (half*)d_a, (half*)d_b, d_c, __matrixSize);
+    mat_mul_add_rect<half, float, 32, 2><<<gridDim, blockDim>>>(d_out, (half*)d_a, (half*)d_b, d_c, __matrixSize);
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&time, start, stop);
@@ -491,7 +487,7 @@ void MMAOptCUDAH::ComputeNTime(unsigned int loopCount)
     gridDim.y = (this->__matrixSize/blockDim.y);
     for (unsigned int i = 0; i < loopCount; i++)
     {
-        mat_mul_add<half, float, 16, 16><<<gridDim, blockDim>>>(d_out, (half*)d_a, (half*)d_b, d_c, __matrixSize);
+        mat_mul_add<half, float, 16><<<gridDim, blockDim>>>(d_out, (half*)d_a, (half*)d_b, d_c, __matrixSize);
     }
     
 }
@@ -506,4 +502,97 @@ void MMAOptCUDAH::Cleanup()
     d_b = nullptr;
     d_c = nullptr;
     d_out = nullptr;
+}
+
+
+const char *MMAOptCUDASF16::GetOPTMame()
+{
+    return name;
+}
+
+double MMAOptCUDASF16::Compute()
+{
+    if(d_out == nullptr) return -1;
+
+    float time;
+    dim3 gridDim, blockDim;
+	// 16 warps in one block
+	blockDim.x = 16;
+    blockDim.y = 16;
+
+    gridDim.x = (this->__matrixSize/blockDim.x);
+    gridDim.y = (this->__matrixSize/blockDim.y);
+
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    cudaEventRecord(start);
+    mat_mul_add<float, float, 16><<<gridDim, blockDim>>>(this->d_out, this->d_a, this->d_b, this->d_c, this->__matrixSize);
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&time, start, stop);
+    return (double)time;
+}
+
+
+
+const char *MMAOptCUDASH32::GetOPTMame()
+{
+    return name;
+}
+
+double MMAOptCUDASH32::Compute()
+{
+    if(d_out == nullptr) return -1;
+
+    float time;
+    dim3 gridDim, blockDim;
+	// 16 warps in one block
+	blockDim.x = 32;
+    blockDim.y = 32;
+
+    gridDim.x = (this->__matrixSize/blockDim.x);
+    gridDim.y = (this->__matrixSize/blockDim.y);
+
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    cudaEventRecord(start);
+    mat_mul_add<half, float, 32><<<gridDim, blockDim>>>(d_out, (half*)d_a, (half*)d_b, d_c, __matrixSize);
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&time, start, stop);
+    return (double)time;
+}
+
+const char *MMAOptCUDAH2::GetOPTMame()
+{
+    return name;
+}
+
+double MMAOptCUDAH2::Compute()
+{
+    if(d_out == nullptr) return -1;
+
+    float time;
+    dim3 gridDim, blockDim;
+	// 16 warps in one block
+	blockDim.x = 32;
+    blockDim.y = 32;
+
+    gridDim.x = (this->__matrixSize/blockDim.x);
+    gridDim.y = (this->__matrixSize/(blockDim.y*3));
+
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    cudaEventRecord(start);
+    mat_mul_add_rect<half, float, 32, 3><<<gridDim, blockDim>>>(d_out, (half*)d_a, (half*)d_b, d_c, __matrixSize);
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&time, start, stop);
+    return (double)time;
 }
