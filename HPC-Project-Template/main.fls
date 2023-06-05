@@ -435,21 +435,21 @@ INPUT ./figures/Comp_time.png
 INPUT figures/Comp_time.png
 INPUT ./figures/Comp_time.png
 INPUT ./figures/Comp_time.png
-INPUT ./figures/Tot_time_dealloc.png
-INPUT ./figures/Tot_time_dealloc.png
-INPUT figures/Tot_time_dealloc.png
-INPUT ./figures/Tot_time_dealloc.png
-INPUT ./figures/Tot_time_dealloc.png
+INPUT ./figures/Tot_time_deac.png
+INPUT ./figures/Tot_time_deac.png
+INPUT figures/Tot_time_deac.png
+INPUT ./figures/Tot_time_deac.png
+INPUT ./figures/Tot_time_deac.png
 INPUT ./figures/Relative speed up to Cuda.png
 INPUT ./figures/Relative speed up to Cuda.png
 INPUT figures/Relative speed up to Cuda.png
 INPUT ./figures/Relative speed up to Cuda.png
 INPUT ./figures/Relative speed up to Cuda.png
-INPUT ./figures/Error to CPU.png
-INPUT ./figures/Error to CPU.png
-INPUT figures/Error to CPU.png
-INPUT ./figures/Error to CPU.png
-INPUT ./figures/Error to CPU.png
+INPUT ./figures/Mean of error compared to CPU.png
+INPUT ./figures/Mean of error compared to CPU.png
+INPUT figures/Mean of error compared to CPU.png
+INPUT ./figures/Mean of error compared to CPU.png
+INPUT ./figures/Mean of error compared to CPU.png
 INPUT ./main.bbl
 INPUT main.bbl
 INPUT ./main.bbl
