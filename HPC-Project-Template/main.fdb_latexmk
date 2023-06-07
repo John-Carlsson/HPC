@@ -1,13 +1,13 @@
 # Fdb version 3
-["bibtex main"] 1686037901 "main.aux" "main.bbl" "main" 1686037931
+["bibtex main"] 1686126335 "main.aux" "main.bbl" "main" 1686126336
   "./IEEEtran.bst" 1440622570 57748 7c8250ecf02814ce6ddc0cdbb63df1dd ""
-  "main.aux" 1686037931 4449 2614fc8a8a31c6e8f3d61bbd7aa3f9f7 "pdflatex"
-  "sources.bib" 1685536498 1044 b7acfbe70d9ddd43802812d9ac3843a6 ""
+  "main.aux" 1686126336 4317 dd1fd3a90549bc1a49ee764fd549ccbc "pdflatex"
+  "sources.bib" 1686125362 1445 98c2fbb85843e6fd83c2251fb6cfca92 ""
   (generated)
   "main.bbl"
   "main.blg"
-["pdflatex"] 1686037929 "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" "main.pdf" "main" 1686037931
-  "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" 1686037929 17081 cd1ec580b7870020f7e4067ed5274568 ""
+["pdflatex"] 1686126335 "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" "main.pdf" "main" 1686126336
+  "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" 1686126333 17850 7a547c5c42a9c7415ae587c1eeadb64c ""
   "/usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2022/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2022/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1136768653 960 379cc0019370a9e0208a0a3f949f847a ""
@@ -93,12 +93,12 @@
   "/usr/local/texlive/2022/texmf.cnf" 1647878952 577 209b46be99c9075fd74d4c0369380e8c ""
   "figures/Comp_time.png" 1685980096 76223 a574028a65663aa58679ad99fb0a242f ""
   "figures/Mean of error compared to CPU.png" 1685983771 21630 9b86ac657b4a8fdc63a48fa698b0bef9 ""
-  "figures/Relative speed up to Cuda.png" 1685981550 30690 2d3c4bdd43b83a1120e4d4ad5bf09e48 ""
   "figures/SM.png" 1684216942 783463 e35ad188357e1fa8bc72e653b69261af ""
   "figures/Tot_time_deac.png" 1685981685 63704 72f2ad71bcf7ecfcf72728675bc1a9ce ""
-  "main.aux" 1686037931 4449 2614fc8a8a31c6e8f3d61bbd7aa3f9f7 "pdflatex"
-  "main.bbl" 1686037901 1356 181549dd29ea60486cacfdbfb6e7e127 "bibtex main"
-  "main.tex" 1686037929 17081 cd1ec580b7870020f7e4067ed5274568 ""
+  "figures/relative_speedup.png" 1686061794 50857 9d44e14dc2de66ff064062ab644d6acc ""
+  "main.aux" 1686126336 4317 dd1fd3a90549bc1a49ee764fd549ccbc "pdflatex"
+  "main.bbl" 1686126335 1615 8d393167fd1cdddd3b93c8c7bf5ad506 "bibtex main"
+  "main.tex" 1686126333 17850 7a547c5c42a9c7415ae587c1eeadb64c ""
   (generated)
   "main.aux"
   "main.log"

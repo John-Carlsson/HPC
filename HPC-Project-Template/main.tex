@@ -122,9 +122,9 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   
   The key feature of tensor cores is their ability to perform mixed-precision operations using 
   half-precision floating-point (FP16) data types. By using FP16, tensor cores can process a larger 
-  number of elements simultaneously, leading to improved throughput. 
+  number of elements simultaneously, leading to improved throughput at the cost of accuracy.\cite{precision_FMA} 
   
-  tensor cores operate on up to 16x16 matrix tiles, performing matrix multiplication and accumulation (MMA) 
+  Tensor cores operate on 4x4 matrix tiles, performing matrix multiplication and accumulation (MMA) 
   operations. These operations are highly parallel and can be efficiently executed on tensor cores. 
   By exploiting the parallelism of tensor cores and their ability to process multiple elements 
   simultaneously, significant performance gains can be achieved compared to traditional GPU 
@@ -150,6 +150,61 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   tensor cores, with their ability to efficiently perform MMA operations, offer a promising solution 
   for accelerating this operation.
   
+  
+  \section{Code}
+  In this section we present the main part of the code. The code shown is the computational part. Since this is
+  deemed most important. We show here the Cuda code and the tensor code.
+
+  \subsection{CPU code}\label{sec:CPUCode}
+  We implement a CPU version of the MMA operation to have a reference to verify our computation results.
+  The CPU code is an implement of the MMA operation that uses the following optimizations:
+  \begin{enumerate}
+    \item Tiling
+    \item Tarallelisation using OpenMP
+    \item Compiler vectorisation for AVX512 using OpenMP
+    \item Compiler optimization flags
+  \end{enumerate}
+
+
+  \subsection{Cuda code}\label{sec:CudaCode}
+  The code is heavily simplified to keep the essence. For full code, see appendix.
+
+  \begin{lstlisting}
+    __global__ void mat_mul_add(Out *out, In *A, In *B, Out *c, int n)
+    {   
+        sum_acc = c;
+        for (tileNum = 0; tileNum < n/TILE_SIZE; tileNum++)
+        {   // load into shared memory, coalesced
+            a_shared = A;
+            b_shared = B;
+            __syncthreads();
+            for (int k = 0; k < TILE_SIZE; k++)
+            {sum_acc += a_shared[threadIdx.y][k] * b_shared[k][threadIdx.x]; }
+        }
+        out = sum_acc;
+    }   
+  \end{lstlisting}
+  
+  
+  \subsection{Tensor code}\label{sec:TensorCode}
+  The tensor code is implemented using the WMMA,  Warped matrix multiplication addition,
+  library.
+  \begin{lstlisting}
+  __global__ void mat_mul_add_tensor(half *a, half *b, float *C, float *d, int N){
+  // Declare the fragments
+  wmma::fragment<wmma::matrix_a, WMMA_M, WMMA_N, WMMA_K, half, wmma::row_major> a_frag;
+  wmma::fragment<wmma::matrix_b, WMMA_M, WMMA_N, WMMA_K, half, wmma::row_major> b_frag;
+  wmma::fragment<wmma::accumulator, WMMA_M, WMMA_N, WMMA_K, float> c_frag;
+  wmma::load_matrix_sync(c_frag, C, N, wmma::mem_row_major);
+  // Loop over k
+  for (int i = 0; i < N; i += WMMA_K){
+  wmma::load_matrix_sync(a_frag, a, N);
+  wmma::load_matrix_sync(b_frag, b, N);
+  // Perform the matrix multiplication
+  wmma::mma_sync(c_frag, a_frag, b_frag, c_frag);}
+  wmma::store_matrix_sync(d, c_frag, N, wmma::mem_row_major);}
+  \end{lstlisting}
+
   \section{Experimental Setup}\label{sec:experimental-setup}
   
   In this section, we describe the experimental setup used to evaluate 
@@ -176,7 +231,9 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
     \hline
     GPU Model & NVIDIA Quadro 4000 RTX \\
     \hline
-    Streamlline Multiprocessors (SM) & 4 \\
+    Cuda cores & 2304 \\
+    \hline
+    Memory interface & 256-bit \\
     \hline
     Compute capability & 7.5 \\
     \hline
@@ -198,65 +255,6 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   The CPU implementation was written in C++, while the GPU implementations were developed using CUDA.
 
   
-  \section{Code}
-  In this section we present the main part of the code. The code shown is the computational part. Since this is
-  deemed most important. We show here the Cuda code and the tensor code.
-
-  \subsection{CPU code}\label{sec:CPUCode}
-  We implement a CPU version of the MMA operation to have a reference to verify our computation results.
-  The CPU code is an implement of the MMA operation that uses the following optimizations:
-  \begin{enumerate}
-    \item tiling
-    \item parallelisation using OpenMP
-    \item compiler vectorisation for AVX512 using OpenMP
-    \item compiler optimization flags
-  \end{enumerate}
-
-
-  \subsection{Cuda code}\label{sec:CudaCode}
-  The code is heavily simplified to keep the essence. For full code, see appendix.
-
-  \begin{lstlisting}
-    __global__ void mat_mul_add(Out *out, In *A, In *B, Out *c, int n)
-    {   
-        sum_acc = c;
-        for (tileNum = 0; tileNum < n/TILE_SIZE; tileNum++)
-        {   // load into shared memory, coalesced
-            a_shared = A;
-            b_shared = B;
-            __syncthreads();
-            for (int k = 0; k < TILE_SIZE; k++)
-            {sum_acc += a_shared[threadIdx.y][k] * b_shared[k][threadIdx.x]; }
-        }
-        out = sum_acc;
-    }   
-  \end{lstlisting}
-  
-  
-  \subsection{Tensor code}\label{sec:TensorCode}
-  To make the code more compact, these simplifications are made:\\
-  Bs = Blocksize \\
-  tIdx = threadIdx \\
-  bIdx = blockIdxx \\
-  bDim = blockDimx
-
-  \begin{lstlisting}
-__global__ void mat_mul_add_tensor(half *a, half *b, float *C, float *d, int N){
-// Declare the fragments
-wmma::fragment<wmma::matrix_a, WMMA_M, WMMA_N, WMMA_K, half, wmma::row_major> a_frag;
-wmma::fragment<wmma::matrix_b, WMMA_M, WMMA_N, WMMA_K, half, wmma::row_major> b_frag;
-wmma::fragment<wmma::accumulator, WMMA_M, WMMA_N, WMMA_K, float> c_frag;
-wmma::load_matrix_sync(c_frag, C, N, wmma::mem_row_major);
-// Loop over k
-for (int i = 0; i < N; i += WMMA_K){
-  wmma::load_matrix_sync(a_frag, a, N);
-  wmma::load_matrix_sync(b_frag, b, N);
-  // Perform the matrix multiplication
-  wmma::mma_sync(c_frag, a_frag, b_frag, c_frag);}
-  wmma::store_matrix_sync(d, c_frag, N, wmma::mem_row_major);}
-  \end{lstlisting}
-
-
   \section{Benchmarking Methodology}\label{sec:benchmarking-methodology}
   
   To evaluate the performance of tensor cores, we performed a series of experiments using different 
@@ -280,40 +278,53 @@ for (int i = 0; i < N; i += WMMA_K){
   
   \subsection{Performance Comparison}\label{sec:performance-comparison}
 
-  %Figure~\ref{fig:performance-comparison} 
-  Insert Picture here\\
-  shows the execution time of the MMA operation for different matrix sizes and precision settings.
-  
-  \begin{figure}[htbp]
+  First we look at the computational time for defferent kinds of matrices,
+  the results are plotted on a log scale on both axises. And the result show clearly that
+  CPU is inferior to the other implementations even with optimzations.
+  The tensor code which is not optimized is among the cuda implementaions with optimzations.
+
+  \begin{figure}[h]
     \centering
     \includegraphics[scale=0.5]{figures/Comp_time.png}
     \caption{Performance Comparison}
     \label{fig:performance-comparison}
   \end{figure}
 
-  \begin{figure}[htbp]
+  The second graph shows the total time to run a instruction. Here we take into account the movement of memory.
+  The time is divided into three parts: allocation, computation, an deallocation.
+  Here we see that memory movement has the biggest impact on the smaller matrix sizes.
+
+
+  \begin{figure}[h]
     \centering
     \includegraphics[scale=0.5]{figures/Tot_time_deac.png}
     \caption{Performance Comparison total time with deallocation}
     \label{fig:time-comparison}
   \end{figure}
 
+  Now we look at the relative computational speedup compared to a Cuda implementaion that uses global memory.
+  We chose to compare to the Cuda with global memory since the performance is closer to 
+  the other implementaions and a comparison to CPU would be irrelevent since all of the implementaions
+  outscale the CPU by large. We see here that tensor cores without any speific optimzation is the fastest
+  implementaion for all matrix sizes except for 32x32. However the Cuda implementaion with 32*96 tiling is not far behind,
+  however as we will see in figure \ref{fig:precision-impact}, the accuracy for smaller matrices is not good.
 
-
-  \begin{figure}[htbp]
+  \begin{figure}[h]
     \centering
-    \includegraphics[scale=0.28]{figures/Relative speed up to Cuda.png}
+    \includegraphics[scale=0.2]{figures/relative_speedup.png}
     \caption{Relative speedup to CUDA with global memory}
     \label{fig:performance-comparison}
   \end{figure}
   
-  ANALYSIS
+  
   
   \subsection{Impact of Precision}\label{sec:impact-precision}
   
-
-  Next, we analyze the impact of precision on the performance of tensor cores. Figure %\ref{fig:precision-impact} illustrates the execution time of the MMA operation for different precision settings using tensor cores.
-  
+  To look at the precision of our implementations we compare to the CPU how much each value differ in percentage. We used this formula:
+  \[error = abs(OUT - CPU) / CPU \]
+  We see as previously mentioned that the Cuda with 32*96 tiling has an exceptionally high error compared to the other implementations.
+  For smaller matrices the tiling is just not effective an will overlap and hence cause a big error. We also see that the error decreases with size.
+  This may be attributed tho the number used in our testing, which is random floating point numbers between 0 and 1. 
   \begin{figure}[htbp]
     \centering
     \includegraphics[scale=0.42]{figures/Mean of error compared to CPU.png}
@@ -326,22 +337,8 @@ for (int i = 0; i < N; i += WMMA_K){
   leading to higher throughput. This accuracy also improves with time for the matrix sizes.
   Using FP16 then introduces a degree of numerical approximation, affecting the accuracy of the computation.
   Therefore, the choice of computing should be carefully considered based on the specific
-  requirements of the application.
+  requirements of the application. 
   
-  \subsection{Optimization Techniques}\label{sec:optimization-techniques}
-  
-  To maximize the utilization of our approaches and achieve optimal performance, we explored several 
-  optimization techniques, including:
-  
-  \begin{itemize}
-    \item Matrix tiling: By partitioning the matrices
-    into smaller tiles that fit the tensor Core dimensions, we can improve data locality 
-    and exploit the parallelism of tensor cores more effectively.
-    \item Memory access patterns: Optimizing memory access patterns can minimize data 
-    dependencies and ensure efficient memory utilization, reducing memory stalls and improving 
-    performance.
-    
-  \end{itemize}
   
   \section{Limitations and Challenges}\label{sec:limitations-challenges}
   The main limitations faced in this project was the limited information regarding how to program tensor cores.
