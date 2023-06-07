@@ -81,32 +81,35 @@ void testCycle(size_t N, size_t CPU_threshold, int debugMatrices, unsigned int c
     MakeMatrix(C, N, N, (float)rand()/(float)(RAND_MAX))
 
     MakeMatrix(OutCPU, N, N, 0)
-    MakeMatrix(OutCudaGM, N, N, 0)
+    //MakeMatrix(OutCudaGM, N, N, 0)
     MakeMatrix(OutCudaH, N, N, 0)
     MakeMatrix(OutCudaH2, N, N, 0)
-    MakeMatrix(OutCuda, N, N, 0)
+    //MakeMatrix(OutCuda, N, N, 0)
     MakeMatrix(OutCudaF16, N, N, 0)
     MakeMatrix(OutCudaH32, N, N, 0)
-    MakeMatrix(OutTensor, N, N, 0)
-    MakeMatrix(OutCublas, N, N, 0)
+    //MakeMatrix(OutTensor, N, N, 0)
+    //MakeMatrix(OutCublas, N, N, 0)
     //MakeMatrix(OutTensorS, N, N, 0)
 
     MMAOptCPU MMACpu(A, B, C, OutCPU, N);
-    MMAOptCUDAGlobMem MMACudaGM(A, B, C, OutCudaGM, N);
-    MMAOptCUDA MMACuda(A, B, C, OutCuda, N);
+    //MMAOptCUDAGlobMem MMACudaGM(A, B, C, OutCudaGM, N);
+    //MMAOptCUDA MMACuda(A, B, C, OutCuda, N);
     MMAOptCUDAH MMACudaH(A, B, C, OutCudaH, N);
     MMAOptCUDAH2 MMACudaH2(A, B, C, OutCudaH2, N);
     MMAOptCUDASF16 MMACudaF16(A, B, C, OutCudaF16, N);
     MMAOptCUDASH32 MMACudaH32(A, B, C, OutCudaH32, N);
-    MMAOptTensor MMATensor(A, B, C, OutTensor, N);
-    MMAOptCublas MMACublas(A, B, C, OutCublas, N);
+    //MMAOptTensor MMATensor(A, B, C, OutTensor, N);
+    //MMAOptCublas MMACublas(A, B, C, OutCublas, N);
     //MMAOptTensorShared MMATemsorS(A, B, C, OutTensorS, N);
+    //std::vector<MMAOperation*> Ops = 
+    //    {&MMACpu, &MMACudaGM, &MMACuda, &MMACudaH, &MMACudaH2, &MMACudaF16, &MMACudaH32, &MMATensor, &MMACublas};
+    //std::vector<float*> OutBuffs = 
+    //    {OutCPU, OutCudaGM, OutCuda, OutCudaH, OutCudaH2, OutCudaF16, OutCudaH32, OutTensor, OutCublas};
+
     std::vector<MMAOperation*> Ops = 
-        {&MMACpu, &MMACudaGM, &MMACuda, &MMACudaH, &MMACudaH2, &MMACudaF16, &MMACudaH32, &MMATensor, &MMACublas};//, &MMATemsorS};
-        //{&MMACpu, &MMACudaGM, &MMACuda, &MMATensor, &MMATemsorS};
+        {&MMACpu, &MMACudaH, &MMACudaH2, &MMACudaF16, &MMACudaH32};
     std::vector<float*> OutBuffs = 
-        {OutCPU, OutCudaGM, OutCuda, OutCudaH, OutCudaH2, OutCudaF16, OutCudaH32, OutTensor, OutCublas};//, OutTensorS};
-        //{OutCPU, OutCudaGM, OutCuda, OutTensor, OutTensorS};
+        {OutCPU, OutCudaH, OutCudaH2, OutCudaF16, OutCudaH32};
 
     std::vector<const char*> tests = {"Loading","Computing","Outputing"};
 
@@ -254,14 +257,14 @@ void testCycle(size_t N, size_t CPU_threshold, int debugMatrices, unsigned int c
     free(C);
 
     free(OutCPU);
-    free(OutCudaGM);
+    //free(OutCudaGM);
     free(OutCudaH);
     free(OutCudaH2);
-    free(OutCuda);
+    //free(OutCuda);
     free(OutCudaF16);
     free(OutCudaH32);
-    free(OutTensor);
-    free(OutCublas);
+    //free(OutTensor);
+    //free(OutCublas);
     //free(OutTensorS);
 
     free(Res);

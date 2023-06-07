@@ -289,7 +289,7 @@ double MMAOptTensor::Compute()
     dim3 gridDim, blockDim;
     // 16 warps in one block
     // 128x4 means we have 16 warps and a block computes a 64x64 output tile
-    blockDim.x = 256;
+    blockDim.x = 128;
     blockDim.y = 4;//8
 
     gridDim.x = this->__matrixSize/(blockDim.x/32 * 16);

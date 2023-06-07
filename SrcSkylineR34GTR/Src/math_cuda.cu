@@ -85,7 +85,7 @@ __global__ void mat_mul_add(Out *out, In *A, In *B, Out *c, int n)
     unsigned int col = blockIdx.x * blockDim.x + threadIdx.x;
 
 
-    Out sum_acc = row < n && col < n ? c[row*n + col] : 0;
+    Out sum_acc = (row < n && col < n ? c[row*n + col] : 0); 
     for (size_t tileNum = 0; tileNum < n/TILE_SIZE; tileNum++)
     {
 
@@ -101,11 +101,12 @@ __global__ void mat_mul_add(Out *out, In *A, In *B, Out *c, int n)
 
         for (int k = 0; k < TILE_SIZE; k++)
         {
-            sum_acc += (Out)a_shared[threadIdx.y][k] * (Out)b_shared[k][threadIdx.x];
+
+            sum_acc += (Out)(a_shared[threadIdx.y][k] * b_shared[k][threadIdx.x]);
             
         }
     }
-
+    //if(row  < n &&col < n)
     out[row*n + col] = sum_acc;
     
 }   
@@ -140,41 +141,14 @@ __global__ void mat_mul_add_rect(Out *out, In *A, In *B, Out *c, int n)
         for (unsigned int subthread = 0; subthread < FACTOR; subthread++)
             for (int k = 0; k < TILE_SIZE; k++)
             {
+
                 accs[subthread] += (Out)(a_shared[subthread][threadIdx.y][k] * b_shared[k][threadIdx.x]);
             }
     }
     for (unsigned int subthread = 0; subthread < FACTOR; subthread++)
-        out[(row + TILE_SIZE * subthread)*n + col] = accs[subthread];
+        if(row + TILE_SIZE * subthread < n &&col < n)
+            out[(row + TILE_SIZE * subthread)*n + col] = accs[subthread];
 
-
-    /*
-    const unsigned int ratio = TILE_SIZE_Y/TILE_SIZE;
-
-    for (unsigned int tileNumYA = 0; tileNumYA < n/(TILE_SIZE * FACTOR); tileNumYA++)
-    {
-        for (unsigned int tileNum  = 0; tileNum < FACTOR; tileNum++)
-        {
-            unsigned int ARow = row + TILE_SIZE * tileNum;
-            unsigned int ACol = (tileNumYA * ratio + tileNum)*TILE_SIZE + threadIdx.x;
-            unsigned int BRow = (tileNumYA * ratio + tileNum)*TILE_SIZE + threadIdx.y;
-            unsigned int BCol = col;
-
-            a_shared[tileNum][threadIdx.y][threadIdx.x] = (ARow < n && ACol < n) ? A[ARow*n + ACol] : (In)0;
-            if (!tileNum)
-                b_shared[threadIdx.y][threadIdx.x] = (BRow < n && BCol < n) ? B[BRow*n + BCol] : (In)0;
-
-            __syncthreads();
-        }
-        for (unsigned int tileNum = 0; tileNum < ratio; tileNum++)
-            for (int k = 0; k < TILE_SIZE; k++)
-            {
-                accs[tileNum] += (Out)(a_shared[tileNum][threadIdx.y][k] * b_shared[k][threadIdx.x]);
-                
-            }
-    }
-    for (unsigned int tileNum = 0; tileNum < ratio; tileNum++)
-        out[(row + TILE_SIZE * tileNum)*n + col] = accs[tileNum];
-*/
 }   
         
 #endif

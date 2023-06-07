@@ -167,43 +167,104 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
 
 
   \subsection{Cuda code}\label{sec:CudaCode}
-  The code is heavily simplified to keep the essence. For full code, see appendix.
+  We implemented multiple versions of the matrix multiplication and addition with cuda to
+  test out the effect of multiple optimizations techniques. For each implementation, 
+  the code is heavily simplified to keep the essence. For full code, see appendix.
 
+  \subsubsection[short]{Basic MMA in Cuda}
+  The MMA implement in cuda is very basic as it uses the base formula of a matrix multiplication
+  and addition and assign one thread per each element of the output matrix. 
+
+
+  \subsubsection[short]{MMA with shared Memory}
+  This MMA implement uses shared memory to optimize global memory acces count. The multiplication operation 
+  is done using tiling with the size of the tile matching the size of the block. For each tile, within
+  a same block, each threads load a single element of the tile to the shared memory. 
   \begin{lstlisting}
-    __global__ void mat_mul_add(Out *out, In *A, In *B, Out *c, int n)
+    __global__ void MMACudaShared(float *out, float *A, float *B, float *c, int n)
     {   
-        sum_acc = c;
-        for (tileNum = 0; tileNum < n/TILE_SIZE; tileNum++)
-        {   // load into shared memory, coalesced
-            a_shared = A;
-            b_shared = B;
+        sum = c[...];
+        for (tileNum = 0; tileNum < n/TILE_SIZE; tileNum++){
+            a_shared[...] = A[...];
+            b_shared[...] = B[...];
             __syncthreads();
             for (int k = 0; k < TILE_SIZE; k++)
-            {sum_acc += a_shared[threadIdx.y][k] * b_shared[k][threadIdx.x]; }
+            {sum += a_shared[...] * b_shared[...]; }
         }
-        out = sum_acc;
+        out = sum;
     }   
+  \end{lstlisting}
+
+  \subsubsection[short]{Mixed precision MMA}
+  The Cuda API provides the posibility to work with floating point numbers of half the size of regular 32 bits floats.
+  Mixed computation works with A and B being half precision floats matrices and C and The output are regular float matrices.
+  We made two versions of this MMA Mixed precision operation based on the MMA shared memory implementation. One version
+  convert halfs to float before doing the computation to see the effect on bandwidth and the other does the conversion after. 
+  \begin{lstlisting}
+    __global__ void MMACudaMixedA(float *out, half *A, half *B, float *c, int n)
+    {   
+        ...
+            for (int k = 0; k < TILE_SIZE; k++)
+            sum += (float)a_shared[...] * (float)b_shared[...]; }
+        ...
+    }
+    __global__ void MMACudaMixedB(float *out, half *A, half *B, float *c, int n)
+    {   
+        ...
+            for (int k = 0; k < TILE_SIZE; k++)
+            sum += (float)(a_shared[...] * b_shared[...]); }
+        ...
+    }
+  \end{lstlisting}
+  \subsubsection[short]{Thread coarsening Mixed precision MMA}
+  The space gained in the shared memory is not enough to double the tile size of the shared memory. We wanted 
+  to maximize the usage of the shared memory to reduce the amount of time each thread has to wait for the memory
+  to arrive to the shared memory between each operation. This operation is based on Mixed precision implementation.
+  \begin{lstlisting}
+    __global__ void MMACoarsening(float *out, half *A, half *B, float *c, int n)
+    {   
+        Out accs[NUMTHREADS];
+        for (subthread = 0; subthread < NUMTHREADS; subthread++)
+            accs[subthread] = c[(row + TILE_SIZE * subthread)*n + col];
+        for (tileNum = 0; tileNum < n/TILE_SIZE; tileNum++){
+            for (subthread = 0; subthread < NUMTHREADS; subthread++)
+                a_shared[subthread][...] = A[...];
+            b_shared[...] = B[...];
+            __syncthreads();
+            for (int k = 0; k < TILE_SIZE; k++)
+                for (subthread = 0; subthread < NUMTHREADS; subthread++)
+                {suaccs[subthread]m += (float)a_shared[subthread][...] * (float)b_shared[...]; }
+        }
+        for (subthread = 0; subthread < NUMTHREADS; subthread++)
+          out[...] = accs[subthread];
+    }
   \end{lstlisting}
   
   
   \subsection{Tensor code}\label{sec:TensorCode}
   The tensor code is implemented using the WMMA,  Warped matrix multiplication addition,
-  library.
+  library. We are working in our case with 16*16*16 fragments that are for row major matrices.
   \begin{lstlisting}
+  using namespace wmma
   __global__ void mat_mul_add_tensor(half *a, half *b, float *C, float *d, int N){
   // Declare the fragments
-  wmma::fragment<wmma::matrix_a, WMMA_M, WMMA_N, WMMA_K, half, wmma::row_major> a_frag;
-  wmma::fragment<wmma::matrix_b, WMMA_M, WMMA_N, WMMA_K, half, wmma::row_major> b_frag;
-  wmma::fragment<wmma::accumulator, WMMA_M, WMMA_N, WMMA_K, float> c_frag;
-  wmma::load_matrix_sync(c_frag, C, N, wmma::mem_row_major);
+  fragment<matrix_a, ...> a_frag;
+  fragment<matrix_b, ...> b_frag;
+  fragment<wmma::accumulator, ..., float> c_frag;
+  load_matrix_sync(c_frag, C, N, mem_row_major);
   // Loop over k
   for (int i = 0; i < N; i += WMMA_K){
-  wmma::load_matrix_sync(a_frag, a, N);
-  wmma::load_matrix_sync(b_frag, b, N);
-  // Perform the matrix multiplication
-  wmma::mma_sync(c_frag, a_frag, b_frag, c_frag);}
-  wmma::store_matrix_sync(d, c_frag, N, wmma::mem_row_major);}
+    load_matrix_sync(a_frag, a, N);
+    load_matrix_sync(b_frag, b, N);
+    // Perform the matrix multiplication
+    mma_sync(c_frag, a_frag, b_frag, c_frag);
+  }
+  store_matrix_sync(d, c_frag, N, mem_row_major);
+  }
   \end{lstlisting}
+
+  We tried to shared memory and an implementaion with the cublass library but we had terrible 
+  accuracy results and did not had time to find a solution to fix them. 
 
   \section{Experimental Setup}\label{sec:experimental-setup}
   
