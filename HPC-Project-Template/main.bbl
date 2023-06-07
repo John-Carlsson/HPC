@@ -38,13 +38,8 @@ P.~Blanchard, N.~J. Higham, F.~Lopez, T.~Mary, and S.~Pranesh, ``Mixed
   \url{https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html}, 2007,
   (Accessed: 03 June 2023).
 
-\bibitem{mem_cud}
-S.~Xu and D.~Gregg, ``Exploiting hyper-loop parallelism in vectorization to
-  improve memory performance on cuda gpgpu,'' in \emph{2015 IEEE
-  Trustcom/BigDataSE/ISPA}, vol.~3, 2015, pp. 53--60.
-
 \bibitem{Voltatuningguide}
-{N}vidia, ``{V}olta {T}uning guide,''
+------, ``{V}olta {T}uning guide,''
   \url{https://docs.nvidia.com/cuda/volta-tuning-guide/index.html}, 2017,
   (Accessed: 31 May 2023).
 
