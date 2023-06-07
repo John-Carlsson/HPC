@@ -173,7 +173,7 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
 
   \subsubsection[short]{Basic MMA in Cuda}
   The MMA implement in cuda is very basic as it uses the base formula of a matrix multiplication
-  and addition and assign one thread per each element of the output matrix. 
+  and addition and assign one thread per each element of the output matrix.\cite{Cpp_programming}
 
 
   \subsubsection[short]{MMA with shared Memory}
@@ -219,7 +219,7 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   \subsubsection[short]{Thread coarsening Mixed precision MMA}
   The space gained in the shared memory is not enough to double the tile size of the shared memory. We wanted 
   to maximize the usage of the shared memory to reduce the amount of time each thread has to wait for the memory
-  to arrive to the shared memory between each operation. This operation is based on Mixed precision implementation.
+  to arrive to the shared memory between each operation. This operation is based on Mixed precision implementation.\cite{mem_cud}
   \begin{lstlisting}
     __global__ void MMACoarsening(float *out, half *A, half *B, float *c, int n)
     {   
