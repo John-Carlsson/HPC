@@ -40,11 +40,12 @@
 \maketitle
 
 \begin{abstract}\label{sec:abstract}
-This project was aimed at evaluating Tensor cores in CUDA through experiemnts to get a better understanding off
-high performance computing through different methods. With the ultimate goal to compare the time to calculate a
-matrix multiplication addition. At the start of the project, we were fairly certain that the fastest algorithm would be 
-the Tensor cores, followed by CUDA with shared memory,CUDA global memory, and at the bottom, an optimized CPU version. However, this was not the case.
-The results show that CUDA shared memory is the fastest with global memory just behind. For small matrices tensors appear superior.
+In this paper we aim to evaluate the use of tensor cores in CUDA through experiemnts to get a better 
+understanding off high performance computing through different methods. The goal is to compare the time 
+to calculate a matrix multiplication addition and analyze the impact of tensor cores compared to CPU and GPU
+usage. Finally we will present the results of the benchmarking and show that utilizing Tensor cores 
+provides significant improvements when measuring the computational time.
+
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
@@ -312,7 +313,7 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
     \hline
     Compute capability & 7.5 \\
     \hline
-    shared memory size & 64 kb \\
+    Shared memory size & 64 kb \\
     \hline
     
   \end{tabular}
@@ -328,7 +329,7 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
     \item C++17 compiled with g++ 11.3.0
   \end{itemize}
   \subsection{implementations parameters}
-  Each of our CUDA implementations, exept for the thread coarsening one uses threadblocks of 32 * 32.
+  Each of our CUDA implementations, except for the thread coarsening one uses threadblocks of 32 * 32.
   The thread coarsening version is executed twice with a different value (2 and 3) for NUMTHREADS. This
   mean that the thread coarsening version will be allocating twice and a third of the amount of threads
   by the other CUDA implementations. The Tensor implementation work block that handle 4 by 4 matrices of
@@ -411,9 +412,12 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   
   \subsection{Impact of Precision}\label{sec:impact-precision}
   
-  To look at the precision of our implementations we compare to the CPU how much each value differ in percentage. We used this formula:
-  \[error = abs(OUT - CPU) / CPU \]
-  By looking at the figure \ref{fig:precision-impact} we can see that each thread coarsening implementations as well as the Tensor implementation
+  To look at the precision of our implementations we compare to the CPU how much each value differ in percentage.
+  Then we sum up the values of the error and divide by the number of elements in the matrix size.
+  \[error[i,j] = abs(OUT[i,j] - CPU[i,j]) / CPU[i,j] \]
+  \[\mu_{\mathrm{error}} = sum(error)/Matrix\_size\]
+
+  By looking at the figure~\ref{fig:precision-impact} we can see that each thread coarsening implementations as well as the Tensor implementation
   have an exceptionally high error compared to the other implementations under a matrix size of 128*128.
   For smaller matrices the tiling is just not effective an will overlap and hence cause a big error. We also see that the error decreases with size.
   This may be attributed to the number used in our testing, which is random floating point numbers between 0 and 1. 
