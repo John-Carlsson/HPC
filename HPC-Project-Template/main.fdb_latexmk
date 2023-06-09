@@ -1,13 +1,13 @@
 # Fdb version 3
-["bibtex main"] 1686301508 "main.aux" "main.bbl" "main" 1686301540
+["bibtex main"] 1686302140 "main.aux" "main.bbl" "main" 1686302169
   "./IEEEtran.bst" 1440622570 57748 7c8250ecf02814ce6ddc0cdbb63df1dd ""
-  "main.aux" 1686301540 4716 507b29be78fd224795212eb0b6dc3460 "pdflatex"
+  "main.aux" 1686302169 4852 074c183baeb869b12489f45196353bf9 "pdflatex"
   "sources.bib" 1686148964 1991 cc734431505a0319c9e247cae63b84a1 ""
   (generated)
   "main.bbl"
   "main.blg"
-["pdflatex"] 1686301540 "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" "main.pdf" "main" 1686301540
-  "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" 1686301539 23095 88adcb0b0cf4e6b2da4cd43e5cb59985 ""
+["pdflatex"] 1686302168 "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" "main.pdf" "main" 1686302169
+  "/Users/johncarlsson/Desktop/HPC/HPC-Project-Template/main.tex" 1686302168 23421 aad43fc6df187f22ab821fc1ffaac10f ""
   "/usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2022/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2022/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1136768653 960 379cc0019370a9e0208a0a3f949f847a ""
@@ -97,9 +97,9 @@
   "figures/Tot_time_relative_speedup.png" 1686292070 25188 f4b5dcd119f01fec1442542033e04f6e ""
   "figures/relative_speedup_2.png" 1686292070 28206 205a48f504bc19831b0cec84ba88ffe9 ""
   "figures/threadCoarsening.png" 1686292070 31707 4569d4ecb88cb43f98c928a8fbc3495b ""
-  "main.aux" 1686301540 4716 507b29be78fd224795212eb0b6dc3460 "pdflatex"
-  "main.bbl" 1686301508 1479 33e09eeecad7ca6173672d8111c38f16 "bibtex main"
-  "main.tex" 1686301539 23095 88adcb0b0cf4e6b2da4cd43e5cb59985 ""
+  "main.aux" 1686302169 4852 074c183baeb869b12489f45196353bf9 "pdflatex"
+  "main.bbl" 1686302140 1479 33e09eeecad7ca6173672d8111c38f16 "bibtex main"
+  "main.tex" 1686302168 23421 aad43fc6df187f22ab821fc1ffaac10f ""
   (generated)
   "main.aux"
   "main.log"

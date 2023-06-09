@@ -273,7 +273,34 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   We did a multitude of tests with different parameters to see how performance scale over matrix size
   and how conducting many runs consequently affects performance over time.
 
-  We used square matrices with the sizes of 32, 64, 128, 256, 512, 1024, 2048, 4096 and 8192.
+  We used square matrices with the sizes of NxN where N starts at 32 and is doubled at each size increase until N reaches 8192.
+
+  \begin{table}[h]
+    \caption{Size of N}
+  \centering
+    \begin{tabular}{|c|}
+    \hline
+    32 \\
+    \hline
+    64 \\
+    \hline
+    128 \\
+    \hline
+    256 \\
+    \hline
+    512 \\
+    \hline
+    1024 \\
+    \hline
+    2048 \\
+    \hline
+    4096 \\
+    \hline
+    8192 \\
+    \hline
+
+    \end{tabular}
+  \end{table}
 
   we conducted single comparison runs to mesure the computation error and then 200 runs to get a better average for time.
   Each implement works on the same input matrices that are made of float elements that are initialised with random values between 0 and 1
@@ -283,12 +310,13 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
 
   \subsection{Hardware Configuration}\label{sec:hardware-configuration}
   
-  The experiments were conducted on a system equipped with an NVIDIA GPU that supports Tensor cores.
-  The specific GPU model is seen below. The GPU belongs to a group of compute capability 7.5. 
+  The experiments were conducted on a system equipped with an NVIDIA GPU, the NVIDIA Quadro 4000 RTX.
+  The specifics are shown in table \ref{GPU}.
   
   \begin{table}[htbp]
   \caption{GPU Specifications\cite{Voltatuningguide}}
   \centering
+  \label{GPU}
     \begin{tabular}{|c|c|}
     \hline
     GPU Model & NVIDIA Quadro 4000 RTX \\
