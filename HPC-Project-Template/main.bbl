@@ -21,12 +21,6 @@
 \providecommand{\BIBdecl}{\relax}
 \BIBdecl
 
-\bibitem{NVIDIA_Tensor_Core_Programmability_KTH}
-S.~Markidis, S.~W.~D. Chien, E.~Laure, I.~B. Peng, and J.~S. Vetter, ``Nvidia
-  tensor core programmability, performance \& precision,'' in \emph{2018 IEEE
-  International Parallel and Distributed Processing Symposium Workshops
-  (IPDPSW)}, 2018, pp. 522--531.
-
 \bibitem{precision_FMA}
 P.~Blanchard, N.~J. Higham, F.~Lopez, T.~Mary, and S.~Pranesh, ``Mixed
   precision block fused multiply-add: Error analysis and application to gpu

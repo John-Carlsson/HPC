@@ -82,25 +82,22 @@ such as deep learning, scientific simulations, and image processing. However, pe
 efficiently and at scale is difficult due to the intensity of the operation. 
 
 The difficulties that arise when trying to implement a fast version of MMA are due to 
-a combination of factors including memory access patterns, data dependencies, 
-computational intensity, matrix sizes, hardware limitations, and optimization trade-offs.
+a combination of factors including memory access patterns, 
+computational intensity, hardware limitations, and optimization trade-offs.
 
 The objective of this paper is to provide valuable insights for optimizing MMA computations
 and facilitate the adoption of Tensor cores as a powerful tool for accelerating MMA 
 operations in comparison to CPU and GPU. Our contributions will be as follows:
 \begin{itemize}
-  \item We will measure the speedup achieved by Tensor cores measured in actual seconds and explore how 
-  performance scales.
-  with the size of the matrices.
+  \item We will measure the speedup achieved by Tensor cores and explore how 
+  performance scales with the size of the matrices.
 
   \item We will compare the performance of Tensor cores with CPU and GPU implementations of MMA 
   using different matrix sizes and precision settings.
   
   \item We will analyze the impact of data precision on the performance of Tensor cores and 
   investigate the trade-offs between accuracy and computation time.
-  
-  \item We will explore optimization techniques for maximizing the utilization of Tensor cores 
-  and achieving optimal performance.
+
   
   \item We will provide insights into the limitations and challenges of Tensor cores, 
   including memory constraints, data dependencies, and scalability issues.
@@ -109,13 +106,6 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   
   \section{Background}\label{sec:background}
   
-  \subsection{Tensor cores}\label{sec:Tensor-cores}
-  \begin{figure}[htbp]
-    \centering
-    \includegraphics[scale=0.32]{figures/SM.png}
-    \caption{SM architecture.\cite{NVIDIA_Tensor_Core_Programmability_KTH}}
-    \label{fig:performance-comparison}
-  \end{figure}
 
   Tensor cores are specialized hardware units introduced in NVIDIA GPUs that are designed to accelerate matrix computations, 
   specifically matrix multiplications and convolutions. They leverage mixed-precision arithmetic, 
@@ -131,7 +121,7 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   simultaneously, significant performance gains can be achieved compared to traditional GPU 
   implementations.
 
-  The Tensor operations are warp wize, this means that each Tensor instructions must work on the same 
+  The Tensor operations are warp size, this means that each Tensor instruction must work on the same 
   data within the same warp.
   
   \subsection{Matrix Multiplication Accumulate (MMA)}\label{sec:mma}
@@ -143,7 +133,7 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   
   Mathematically, the MMA operation can be defined as follows:
   
-  \[ C \leftarrow \alpha \cdot A \cdot B + \beta \cdot C \]
+  \[ D \leftarrow \alpha \times A \times B + \beta \times C \]
   
   where A is an m x k matrix, B is a k x N matrix, C is an m x N matrix, and $\alpha$ and $\beta$ are scalar coefficients.
   
@@ -253,7 +243,7 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   
   \subsection{Tensor code}\label{sec:TensorCode}
   The Tensor code is implemented using the WMMA,  Warped matrix multiplication addition,
-  library. We are working in our case with 16*16*16 fragments that are for row major matrices.
+  library. We are working in our case with 16x16x16 fragments that are for row major matrices.
   \begin{lstlisting}
   using namespace wmma
   __global__ void mat_mul_add_tensor(half *a, half *b, float *C, float *d, int N){
@@ -329,7 +319,7 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
     \item C++17 compiled with g++ 11.3.0
   \end{itemize}
   \subsection{implementations parameters}
-  Each of our CUDA implementations, except for the thread coarsening one uses threadblocks of 32 * 32.
+  Each of our CUDA implementations, except for the thread coarsening one uses threadblocks of 32x32.
   The thread coarsening version is executed twice with a different value (2 and 3) for NUMTHREADS. This
   mean that the thread coarsening version will be allocating twice and a third of the amount of threads
   by the other CUDA implementations. The Tensor implementation work block that handle 4 by 4 matrices of
@@ -394,11 +384,11 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   We chose to compare to the CUDA with global memory since the performance is closer to 
   the other implementations and a comparison to CPU would be irrelevent since all of the implementations
   outscale the CPU by large. We see here that Tensor cores without any speific optimzation is the fastest
-  implementation for all matrix sizes above 256 by 256. CUDA implementation with thread coarsening (32*64 tiling) represent a huge
-  speedup compared to the simpler CUDA implementations, the CUDA implementation with thread coarsening (32*96 tiling) also improves
-  the performances but, the gap between 32*64 is not as big as the gain 32*64 offers. Thread coarsening has the goal
+  implementation for all matrix sizes above 256 by 256. CUDA implementation with thread coarsening (32x64 tiling) represent a huge
+  speedup compared to the simpler CUDA implementations, the CUDA implementation with thread coarsening (32x96 tiling) also improves
+  the performances but, the gap between 32x64 is not as big as the gain 32x64 offers. Thread coarsening has the goal
   of saturation the memory bandwidth but has the effect of increasing the register presure. We may have reached a limit.
-  Still, the CUDA implementation with thread coarsening (32*96 tiling) is not that far behind from the Tensor core implementation.
+  Still, the CUDA implementation with thread coarsening (32x96 tiling) is not that far behind from the Tensor core implementation.
   however as we will see in figure \ref{fig:precision-impact}, the accuracy for smaller matrices is not good.
 
   \begin{figure}[h]
@@ -418,7 +408,7 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   \[\mu_{\mathrm{error}} = sum(error)/Matrix\_size\]
 
   By looking at the figure~\ref{fig:precision-impact} we can see that each thread coarsening implementations as well as the Tensor implementation
-  have an exceptionally high error compared to the other implementations under a matrix size of 128*128.
+  have an exceptionally high error compared to the other implementations under a matrix size of 128x128.
   For smaller matrices the tiling is just not effective an will overlap and hence cause a big error. We also see that the error decreases with size.
   This may be attributed to the number used in our testing, which is random floating point numbers between 0 and 1. 
   \begin{figure}[htbp]
@@ -441,9 +431,9 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   The cuBLASs library, which is an optimized version of MMA with Tensor cores, developed by NVIDIA is not open source,
   so there is no real way of obtaining it. This led to experimenting with different setups to achieve the fastest copmutation possible.
   Another challenge to achieve fast computation for larger matrices with tensors are the fact that the GPU 
-  only has 64Kb of memory for each work group. With the tensors, the sum of shared memory is then N*N *(16+16).
+  only has 64Kb of memory for each work group. With the tensors, the sum of shared memory is then NxN x (16x16).
   Which corresponds to the matrix size, and the byte size of the elements in the A and B matrix. This entails that the 
-  largest matrices that can fit this is of 32 x 32 elements of half precision.
+  largest matrices that can fit this is of 32x32 elements of half precision.
 
 
   \section{Conclusion}\label{sec:conclusion}
