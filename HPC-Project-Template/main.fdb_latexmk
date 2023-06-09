@@ -1,15 +1,15 @@
 # Fdb version 3
-["bibtex main"] 1686351138 "main.aux" "main.bbl" "main" 1686351808
+["bibtex main"] 1686351138 "main.aux" "main.bbl" "main" 1686351947
   "./IEEEtran.bst" 1685534920 57748 7c8250ecf02814ce6ddc0cdbb63df1dd ""
-  "main.aux" 1686351800 4799 f91ee5e294d6c051d4d0e53e1a2bc83d "pdflatex"
+  "main.aux" 1686351947 4799 f91ee5e294d6c051d4d0e53e1a2bc83d "pdflatex"
   "sources.bib" 1686159250 1991 cc734431505a0319c9e247cae63b84a1 ""
   (generated)
-  "main.blg"
   "main.bbl"
-["pdflatex"] 1686351800 "/home/cytech/Desktop/HPC/Cuda/HPC/HPC-Project-Template/main.tex" "/home/cytech/Desktop/HPC/Cuda/HPC/HPC-Project-Template/main.pdf" "main" 1686351808
+  "main.blg"
+["pdflatex"] 1686351946 "/home/cytech/Desktop/HPC/Cuda/HPC/HPC-Project-Template/main.tex" "/home/cytech/Desktop/HPC/Cuda/HPC/HPC-Project-Template/main.pdf" "main" 1686351947
   "/etc/texmf/web2c/texmf.cnf" 1594189279 475 c0e671620eb5563b2130f56340a5fde8 ""
-  "/home/cytech/Desktop/HPC/Cuda/HPC/HPC-Project-Template/main.aux" 1686351800 4799 f91ee5e294d6c051d4d0e53e1a2bc83d ""
-  "/home/cytech/Desktop/HPC/Cuda/HPC/HPC-Project-Template/main.tex" 1686351808 25160 6747747288d7cb3383289c33df00d020 ""
+  "/home/cytech/Desktop/HPC/Cuda/HPC/HPC-Project-Template/main.aux" 1686351947 4799 f91ee5e294d6c051d4d0e53e1a2bc83d ""
+  "/home/cytech/Desktop/HPC/Cuda/HPC/HPC-Project-Template/main.tex" 1686351946 25160 3951ca6284c70a9bf3d22f406af868ff ""
   "/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1136768653 960 379cc0019370a9e0208a0a3f949f847a ""
@@ -99,12 +99,12 @@
   "figures/Tot_time_relative_speedup.png" 1686171629 25188 f4b5dcd119f01fec1442542033e04f6e ""
   "figures/relative_speedup_3.png" 1686338731 27868 a487da55cd8cd73f3134fa57c62df0a0 ""
   "figures/threadCoarsening.png" 1686145246 31707 4569d4ecb88cb43f98c928a8fbc3495b ""
-  "main.aux" 1686351800 4799 f91ee5e294d6c051d4d0e53e1a2bc83d "pdflatex"
+  "main.aux" 1686351947 4799 f91ee5e294d6c051d4d0e53e1a2bc83d "pdflatex"
   "main.bbl" 1686351138 1479 33e09eeecad7ca6173672d8111c38f16 "bibtex main"
-  "main.tex" 1686351808 25160 6747747288d7cb3383289c33df00d020 ""
+  "main.tex" 1686351946 25160 3951ca6284c70a9bf3d22f406af868ff ""
   (generated)
-  "main.log"
+  "main.pdf"
   "/home/cytech/Desktop/HPC/Cuda/HPC/HPC-Project-Template/main.log"
+  "main.log"
   "main.aux"
   "/home/cytech/Desktop/HPC/Cuda/HPC/HPC-Project-Template/main.pdf"
-  "main.pdf"
