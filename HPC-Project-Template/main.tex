@@ -10,7 +10,11 @@
   showstringspaces=false,
   columns=flexible,
   basicstyle=\fontsize{9}{12}\ttfamily,
-  numbers=none,
+  numbers=left,                 
+  numbersep=5pt,               
+  showspaces=false,                
+  showstringspaces=false,
+  showtabs=false,
   numberstyle=\tiny\color{black},
   keywordstyle=\color{blue},
   commentstyle=\color{ForestGreen},
@@ -19,6 +23,8 @@
   breakatwhitespace=true,
   tabsize=3
   }
+
+
 
 % nice symbols for real and complex numbers
 \newcommand{\R}[0]{\mathbb{R}}
@@ -188,9 +194,10 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
 
   \subsubsection[short]{Mixed precision MMA}
   The CUDA API provides the posibility to work with floating point numbers of half the size of regular 32 bits floats.
-  Mixed computation works with A and B being half precision floats matrices and C and The output are regular float matrices.
+  Mixed computation works with A and B being half precision floats matrices and C and D are regular float matrices.
   We made two versions of this MMA Mixed precision operation based on the MMA shared memory implementation. One version
-  convert halfs to float before doing the computation to see the effect on bandwidth and the other does the conversion after. 
+  convert halfs to float before doing the computation to see the effect on bandwidth and the other does the conversion after.
+  We also tried a third implementation using the CUDA FMA instruction but  
   \begin{lstlisting}
   __global__ void MMACudaMixedA(float *out, half *A, half *B, float *c, int n)
   {   
@@ -203,7 +210,7 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   {   
       ...
           for (int k = 0; k < TILE_SIZE; k++)
-          sum += __hfma( a_shared[...], b_shared[...], sum ) ; }
+          sum += (float)(a_shared[...]+ b_shared[...] ) ; }
       ...
   }
   \end{lstlisting}
@@ -302,7 +309,7 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
     \end{tabular}
   \end{table}
 
-  we conducted single comparison runs to mesure the computation error and then 200 runs to get a better average for time.
+  we conducted single comparison runs to mesure the computation error and then 100 runs to get a better average for time.
   Each implement works on the same input matrices that are made of float elements that are initialised with random values between 0 and 1
   and are not allocated in an alligned way. The cpu implement will allign the matrices before the computation and each mixed precision implementation will do a CPU pass do the conversion they need
   before sending the data to the GPU, these conversions and memory managements are not mesured in the computation 
@@ -353,9 +360,6 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   by the other CUDA implementations. The Tensor implementation work block that handle 4 by 4 matrices of
   16 by 16 elements, therefore the block size is 128 by 4.
 
-  The MMACudaMixedB implementation is not present in the results as it had some major issues that we could
-  not correct by the time we made the benchmarkings.
-
   \subsection{Benchmarking Methodology}\label{sec:benchmarking-methodology}
   
   To evaluate the performance of Tensor cores, we performed a series of experiments using different 
@@ -364,7 +368,7 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   
   We varied the matrix sizes from small to large to analyze the impact of matrix dimensions on 
   performance. Additionally, we tested different precision settings, including full precision (FP32)
-  and mixed precision (FP16).
+  and mixed precision (FP16 and FP32).
   
   To ensure accurate measurements, we repeated each experiment multiple times and calculated 
   the average execution time. We also recorded the peak memory usage during each experiment to 
@@ -379,14 +383,34 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   
   \subsection{Performance Comparison}\label{sec:performance-comparison}
 
-  First we look at the computational time for defferent kinds of matrices,
-  the results are plotted on a log scale on both axises (See figure \ref{fig:performance-comparison}). And the result show clearly that
-  In terms of pure computation time, the CPU implementation is inferior to the other implementations even with optimzations.
-  The Tensor implementation seem to be the one with the fastest computation time.
+  First we look at the relative computational speedup compared to the basic CUDA implementation, in figure \ref{fig:performance-comparison}.
+  We chose to compare to the basic CUDA implementation since the performance is closer to 
+  the other implementations and a comparison to CPU would be irrelevent since all of the implementations
+  outscale the CPU by large. 
+  We see here that Tensor cores without any speific optimzation is the fastest implementation for all matrix sizes above 512x512.
+  The CUDA Shared and CUDA Shared 16 are the same implementation but the Shared 16 works with smaller tiles and less 
+  memory. There is not a big difference in performance between these two implementations. The CUDA Shared seem to be the faster one. However,
+  on small matrix size, the CUDA Shared 16 seem to be more performant.
+  Mixed Precision implementations does give a little advantage in performance compared to just shared memory.
+  Computing in Float or halfs for mixed precision doesn't provide a big performance upgrade however. So the choice may depend on which results
+  gives the best accuracy.
+  CUDA implementations with thread coarsening (32x64 tiling) represent a huge
+  speedup compared to the simpler CUDA implementations, the CUDA implementation with thread coarsening (32x96 tiling) also improves
+  the performances but, the gap between 32x64 is not as big as the gain 32x64 offers. Thread coarsening has the goal
+  of saturation the memory bandwidth but has the effect of increasing the register presure. So the less big improvement on performance
+  indicate that we may have reached a limit in the register presure.
+  To verify this theory with this implementation we would need to go even higher with the coarsening (for example going to 32x128 tiles) to see how it actually scale.
+  We cannot do such a thing on this GPU as this tile size (32x96) is the biggest configuration that can fit in the shared memory of each block.
+  Indeed, 32x96 uses 4 halfs matrices of 32x32 in the shared memory of each thread blocks, that is 64kb which is the maximum that the Quarto 4000 RTX have available.
+  Still, the CUDA implementation with thread coarsening (32x96 tiling) is not that far behind from the Tensor core implementation, and can even match 
+  tensor core speed for a matrix size of 4096x4096.
+  Again, the way we compute with mixed precision doesn't seem to make much difference for each thread coarsening versions.
+  However as we will see in figure \ref{fig:precision-impact}, the accuracy for smaller matrices is not good.
+  
 
   \begin{figure}[h]
     \centering
-    \includegraphics[scale=0.5]{figures/Comp_time_2.png}
+    \includegraphics[scale=0.5]{figures/relative_speedup_3.png}
     \caption{Performance Comparison}
     \label{fig:performance-comparison}
   \end{figure}
@@ -395,10 +419,12 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   This include the memory allocation, the memory movement, and for some versions,
   the conversion of the data from one type to another, requiered by every mixed precision
   implementations. (See figure \ref{fig:time-comparison})
-  We can see that under a matrix size of 64, the CPU implementation is faster than all the others
-  and that it is not until a size of 256 that every otimplementaionher implementation beat CPU computation.
-  We can also see that every mixed precision operations are slower to run. This is probably caused by
-  our method of converting the memory from one type to another.
+  We can see that under a matrix size of 64x64, the CPU implementation is faster than all the others
+  and that it is not until a size of 256x256 that every otimplementaionher implementation beat CPU computation.
+  We can also see that every mixed precision and tensor implementations are the slowest CUDA implementations
+  to run even if they are the fastest to compute. This is probably caused by
+  our method of converting the memory from one type to another. Therefore, these performance upgrade
+  can get completely nullified by the memory management operations it requieres.
 
 
   \begin{figure}[h]
@@ -407,25 +433,6 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
     \caption{Performance Comparison total time with deallocation}
     \label{fig:time-comparison}
   \end{figure}
-
-  Now we look at the relative computational speedup compared to a CUDA implementation (See figure \ref{fig:performance-comparison}).
-  We chose to compare to the CUDA with global memory since the performance is closer to 
-  the other implementations and a comparison to CPU would be irrelevent since all of the implementations
-  outscale the CPU by large. We see here that Tensor cores without any speific optimzation is the fastest
-  implementation for all matrix sizes above 256 by 256. CUDA implementation with thread coarsening (32x64 tiling) represent a huge
-  speedup compared to the simpler CUDA implementations, the CUDA implementation with thread coarsening (32x96 tiling) also improves
-  the performances but, the gap between 32x64 is not as big as the gain 32x64 offers. Thread coarsening has the goal
-  of saturation the memory bandwidth but has the effect of increasing the register presure. We may have reached a limit.
-  Still, the CUDA implementation with thread coarsening (32x96 tiling) is not that far behind from the Tensor core implementation.
-  however as we will see in figure \ref{fig:precision-impact}, the accuracy for smaller matrices is not good.
-
-  \begin{figure}[h]
-    \centering
-    \includegraphics[scale=0.53]{figures/relative_speedup_2.png}
-    \caption{Relative speedup to CUDA with global memory}
-    \label{fig:performance-comparison}
-  \end{figure}
-  
   
   
   \subsection{Impact of Precision}\label{sec:impact-precision}
@@ -435,15 +442,29 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   \[error[i,j] = abs(OUT[i,j] - CPU[i,j]) / CPU[i,j] \]
   \[\mu_{\mathrm{error}} = sum(error)/Matrix\_size\]
 
-  By looking at the figure~\ref{fig:precision-impact} we can see that each thread coarsening implementations as well as the Tensor implementation
-  have an exceptionally high error compared to the other implementations under a matrix size of 128x128.
-  For smaller matrices the tiling is just not effective an will overlap and hence cause a big error. We also see that the error decreases with size.
+  By looking at the figure~\ref{fig:precision-impact} we can see that each thread coarsening implementations (32x96)
+  have an exceptionally high error of more than 25\% compared to the other implementations under a matrix size of 256x256.
+  For smaller matrices the tiling is just not effective an will overlap and hence cause a big error. This is revealing that 
+  our thread coarsening implementation may need some more refinement. The tensor implementation has also a high mean of error of
+  more than 5\% on matrices of size 256x256.
+  We also see that the error decreases with size with all of these implementations.
   This may be attributed to the number used in our testing, which is random floating point numbers between 0 and 1. 
   \begin{figure}[htbp]
     \centering
-    \includegraphics[scale=0.6]{figures/Mean of error compared to CPU 2.png}
+    \includegraphics[scale=0.6]{figures/Mean of error compared to CPU3.png}
     \caption{Impact of Precision on mixed precision computation and Tensor cores Performance}
     \label{fig:precision-impact}
+  \end{figure}
+
+  On the figure \ref{fig:precision-impact2} we can see that computing in half precision our data gives us a little more 
+  impresitions, but these impresitions decrease over time, and the difference is also not that big considering how small the 
+  impresition value is.
+
+  \begin{figure}[htbp]
+    \centering
+    \includegraphics[scale=0.6]{figures/Mean of error MP.png}
+    \caption{Impact of Precision on mixed precision computation and Tensor cores Performance}
+    \label{fig:precision-impact2}
   \end{figure}
   
   The results show that using mixed precision (FP16) with Tensor cores can provide significant performance improvements compared to full precision (FP32).
