@@ -34,7 +34,7 @@
 
 \begin{document}
 
-\title{Evaluating Tensor cores}
+\title{Evaluating tensor cores}
 
 
 \author{\IEEEauthorblockN{John Carlsson, Cyprien Touron Decourteix}
@@ -46,10 +46,10 @@
 \maketitle
 
 \begin{abstract}\label{sec:abstract}
-In this paper we aim to evaluate the use of tensor cores in CUDA through experiemnts to get a better 
-understanding off high performance computing through different methods. The goal is to compare the time 
+In this paper we evaluate the use of tensor cores in CUDA through experiments to get a better 
+understanding of high performance computing. The goal is to compare the time 
 to calculate a matrix multiplication addition and analyze the impact of tensor cores compared to CPU and GPU
-usage. Finally we will present the results of the benchmarking and show that utilizing Tensor cores 
+usage. Finally we will present the results of the benchmarking and show that utilizing tensor cores 
 provides significant improvements when measuring the computational time.
 
 \end{abstract}
@@ -58,26 +58,26 @@ provides significant improvements when measuring the computational time.
 
 
 Over the past decade, the increasing demand for deep learning and AI applications has
-fueled the need for highly efficient Tensor operations. Traditional GPU architectures are powerful but 
+fueled the need for highly efficient tensor operations. Traditional GPU architectures are powerful but 
 are often limited in their ability to fully exploit the potential of 
-Tensor computations due to the reliance on higher-precision floating-point arithmetic. 
-Tensor cores address this limitation by leveraging mixed-precision arithmetic, combining 
+tensor computations due to the reliance on higher-precision floating-point arithmetic. 
+tensor cores address this limitation by leveraging mixed-precision arithmetic, combining 
 high throughput with reduced precision.
 
-Tensor cores, introduced in NVIDIA's Volta architecture and further enhanced in 
+tensor cores, introduced in NVIDIA's Volta architecture and further enhanced in 
 subsequent architectures such as Turing and Ampere, have revolutionized the performance of 
-Tensor computations on GPUs. These specialized hardware units offer significant speedups 
-by providing native support for low-precision Tensor operations, 
+tensor computations on GPUs. These specialized hardware units offer significant speedups 
+by providing native support for low-precision tensor operations, 
 specifically matrix multiplications and convolutions. 
-The purpose of this project report is to present an evaluation of Tensor cores,
+The purpose of this project report is to present an evaluation of tensor cores,
 exploring their capabilities compared to CPU and GPU based computation.
 
-In this project, we aim to evaluate Tensor cores using the Matrix Multiplication Accumulate (MMA) with various 
+We aim to evaluate tensor cores using the Matrix Multiplication Accumulate (MMA) with various 
 workloads and compare the results to the CPU and GPU performances. 
 
 By conducting this comprehensive evaluation, we aim to provide insights into the capabilities and 
-limitations of Tensor cores. Additionally, the findings from this study will contribute to the 
-broader understanding of GPU acceleration techniques for Tensor operations and their potential 
+limitations of tensor cores. Additionally, the findings from this study will contribute to the 
+broader understanding of GPU acceleration techniques for tensor operations and their potential 
 impact on high-performance computing.
 
 \subsection{Motivation}\label{sec:Motivation}
@@ -92,20 +92,20 @@ a combination of factors including memory access patterns,
 computational intensity, hardware limitations, and optimization trade-offs.
 
 The objective of this paper is to provide valuable insights for optimizing MMA computations
-and facilitate the adoption of Tensor cores as a powerful tool for accelerating MMA 
+and facilitate the adoption of tensor cores as a powerful tool for accelerating MMA 
 operations in comparison to CPU and GPU. Our contributions will be as follows:
+
 \begin{itemize}
-  \item We will measure the speedup achieved by Tensor cores and explore how 
+  \item Measure the speedup achieved by tensor cores and explore how 
   performance scales with the size of the matrices.
 
-  \item We will compare the performance of Tensor cores with CPU and GPU implementations of MMA 
+  \item Compare the performance of tensor cores with CPU and GPU implementations of MMA 
   using different matrix sizes and precision settings.
   
-  \item We will analyze the impact of data precision on the performance of Tensor cores and 
+  \item Analyze the impact of data precision on the performance of tensor cores and 
   investigate the trade-offs between accuracy and computation time.
-
   
-  \item We will provide insights into the limitations and challenges of Tensor cores, 
+  \item Provide insights into the limitations and challenges of tensor cores, 
   including memory constraints, data dependencies, and scalability issues.
   
   \end{itemize}
@@ -115,19 +115,19 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
 
   Tensor cores are specialized hardware units introduced in NVIDIA GPUs that are designed to accelerate matrix computations, 
   specifically matrix multiplications and convolutions. They leverage mixed-precision arithmetic, 
-  combining high throughput with reduced precision to achieve significant speedups in Tensor operations.
+  combining high throughput with reduced precision to achieve significant speedups in tensor operations.
   
-  The key feature of Tensor cores is their ability to perform mixed-precision operations using 
-  half-precision floating-point (FP16) data types. By using FP16, Tensor cores can process a larger 
+  The key feature of tensor cores is their ability to perform mixed-precision operations using 
+  half-precision floating-point (FP16) data types. By using FP16, tensor cores can process a larger 
   number of elements simultaneously, leading to improved throughput at the cost of accuracy.\cite{precision_FMA} 
   
   Tensor cores operate on 4x4 matrix tiles, performing matrix multiplication and accumulation (MMA) 
-  operations. These operations are highly parallel and can be efficiently executed on Tensor cores. 
-  By exploiting the parallelism of Tensor cores and their ability to process multiple elements 
+  operations. These operations are highly parallel and can be efficiently executed on tensor cores. 
+  By exploiting the parallelism of tensor cores and their ability to process multiple elements 
   simultaneously, significant performance gains can be achieved compared to traditional GPU 
   implementations.
 
-  The Tensor operations are warp size, this means that each Tensor instruction must work on the same 
+  The tensor operations are warp size, this means that each tensor instruction must work on the same 
   data within the same warp.
   
   \subsection{Matrix Multiplication Accumulate (MMA)}\label{sec:mma}
@@ -139,7 +139,7 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   
   Mathematically, the MMA operation can be defined as follows:
   
-  \[ D \leftarrow \alpha \times A \times B + \beta \times C \]
+  \[ D \leftarrow \alpha \cdot A \cdot B + \beta \cdot C \]
   
   where A is an m x k matrix, B is a k x N matrix, C is an m x N matrix, and $\alpha$ and $\beta$ are scalar coefficients.
   
@@ -149,12 +149,12 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   
   
   \section{Code}
-  In this section we present the main part of the code. The code shown is the computational part. Since this is
-  deemed most important. We show here the CUDA code and the Tensor code.
+  In this section we present the main part of the code. The code shown is the computational part. 
+  We show here the CUDA code and the tensor code.
 
   \subsection{CPU code}\label{sec:CPUCode}
   We implement a CPU version of the MMA operation to have a reference to verify our computation results.
-  The CPU code is an implement of the MMA operation that uses the following optimizations:
+  The CPU code is an implementation of the MMA operation that uses the following optimizations:
   \begin{enumerate}
     \item Tiling
     \item Tarallelisation using OpenMP
@@ -165,7 +165,7 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
 
   \subsection{CUDA code}\label{sec:CudaCode}
   We implemented multiple versions of the matrix multiplication and addition with CUDA to
-  test out the effect of multiple optimizations techniques. For each implementation, 
+  study the effect of multiple optimizations techniques. For each implementation, 
   the code is heavily simplified to keep the essence. For full code, see appendix.
 
   \subsubsection[short]{Basic MMA in CUDA}
@@ -194,7 +194,7 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
 
   \subsubsection[short]{Mixed precision MMA}
   The CUDA API provides the posibility to work with floating point numbers of half the size of regular 32 bits floats.
-  Mixed computation works with A and B being half precision floats matrices and C and D are regular float matrices.
+  Mixed computation works with A and B being half precision floats matrices and C and D being float matrices.
   We made two versions of this MMA Mixed precision operation based on the MMA shared memory implementation. One version
   convert halfs to float before doing the computation to see the effect on bandwidth and the other does the conversion after.
   We also tried a third implementation using the CUDA FMA instruction but  
@@ -240,7 +240,7 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
           __syncthreads();
           for (int k = 0; k < TILE_SIZE; k++)
               for (subthread = 0; subthread < NUMTHREADS; subthread++)
-              {suaccs[subthread]m += (float)a_shared[subthread][...] * (float)b_shared[...]; }
+              {accs[subthread]m += (float)a_shared[subthread][...] * (float)b_shared[...]; }
       }
       for (subthread = 0; subthread < NUMTHREADS; subthread++)
         out[...] = accs[subthread];
@@ -248,9 +248,9 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   \end{lstlisting}
   
   
-  \subsection{Tensor code}\label{sec:TensorCode}
-  The Tensor code is implemented using the WMMA,  Warped matrix multiplication addition,
-  library. We are working in our case with 16x16x16 fragments that are for row major matrices.
+  \subsection{tensor code}\label{sec:tensorCode}
+  The tensor code is implemented using the WMMA API,  Warped matrix multiplication addition,
+  library. We are working in our case with 16x16x16 fragments with a row-major memory layout.
   \begin{lstlisting}
   using namespace wmma
   __global__ void mat_mul_add_tensor(half *a, half *b, float *C, float *d, int N){
@@ -276,11 +276,10 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   \section{Experimental Setup}\label{sec:experimental-setup}
   
   In this section, we describe the experimental setup used to evaluate 
-  Tensor cores and compare their performance with CPU and GPU implementations of MMA.
-  We did a multitude of tests with different parameters to see how performance scale over matrix size
-  and how conducting many runs consequently affects performance over time.
+  tensor cores and compare their performance with CPU and GPU implementations of MMA.
+  We did a multitude of tests with different parameters to see how performance scale over matrix size.
 
-  We used square matrices with the sizes of NxN where N starts at 32 and is doubled at each size increase until N reaches 8192.
+  We used square matrices with the sizes of NxN where N starts at 32 and is doubled up to 8192.
 
   \begin{table}[h]
     \caption{Size of N}
@@ -309,9 +308,9 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
     \end{tabular}
   \end{table}
 
-  we conducted single comparison runs to mesure the computation error and then 100 runs to get a better average for time.
-  Each implement works on the same input matrices that are made of float elements that are initialised with random values between 0 and 1
-  and are not allocated in an alligned way. The cpu implement will allign the matrices before the computation and each mixed precision implementation will do a CPU pass do the conversion they need
+  we conducted single-run comparisons to measure the computation error and then 100 runs to get a better average for time.
+  Each implementation works on the same input matrices that are made of float elements that are initialised with random values between 0 and 1
+  and are not allocated in an alligned way. The cpu implementation will allign the matrices before the computation and each mixed precision implementation will do a CPU pass do the conversion they need
   before sending the data to the GPU, these conversions and memory managements are not mesured in the computation 
   measurements, however it is taken in account for the total operation execution time.
 
@@ -357,14 +356,14 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   Each of our CUDA implementations, except for the thread coarsening one uses threadblocks of 32x32.
   The thread coarsening version is executed twice with a different value (2 and 3) for NUMTHREADS. This
   mean that the thread coarsening version will be allocating twice and a third of the amount of threads
-  by the other CUDA implementations. The Tensor implementation work block that handle 4 by 4 matrices of
-  16 by 16 elements, therefore the block size is 128 by 4.
+  by the other CUDA implementations. The tensor implementation work block that handle 4x4 matrices of
+  16x16 elements, therefore the block size is 128x4.
 
   \subsection{Benchmarking Methodology}\label{sec:benchmarking-methodology}
   
-  To evaluate the performance of Tensor cores, we performed a series of experiments using different 
+  To evaluate the performance of tensor cores, we performed a series of experiments using different 
   matrix sizes and precision settings. For each experiment, we measured the execution time of the 
-  MMA operation for CPU, GPU (without Tensor cores), and GPU (with Tensor cores) implementations.
+  MMA operation for CPU, GPU without tensor cores, and GPU with tensor cores implementations.
   
   We varied the matrix sizes from small to large to analyze the impact of matrix dimensions on 
   performance. Additionally, we tested different precision settings, including full precision (FP32)
@@ -372,12 +371,12 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   
   To ensure accurate measurements, we repeated each experiment multiple times and calculated 
   the average execution time. We also recorded the peak memory usage during each experiment to 
-  analyze the memory requirements of Tensor cores.
+  analyze the memory requirements of tensor cores.
   
   \section{Results and Analysis}\label{sec:results-analysis}
   
   In this section, we present the results of our experiments and analyze the performance of 
-  Tensor cores compared to CPU and GPU implementations of MMA.
+  tensor cores compared to CPU and GPU implementations of MMA.
 
   % insert a bunch of graphs
   
@@ -387,7 +386,7 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   We chose to compare to the basic CUDA implementation since the performance is closer to 
   the other implementations and a comparison to CPU would be irrelevent since all of the implementations
   outscale the CPU by large. 
-  We see here that Tensor cores without any speific optimzation is the fastest implementation for all matrix sizes above 512x512.
+  We see here that tensor cores without any speific optimzation is the fastest implementation for all matrix sizes above 512x512.
   The CUDA Shared and CUDA Shared 16 are the same implementation but the Shared 16 works with smaller tiles and less 
   memory. There is not a big difference in performance between these two implementations. The CUDA Shared seem to be the faster one. However,
   on small matrix size, the CUDA Shared 16 seem to be more performant.
@@ -396,16 +395,16 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   gives the best accuracy.
   CUDA implementations with thread coarsening (32x64 tiling) represent a huge
   speedup compared to the simpler CUDA implementations, the CUDA implementation with thread coarsening (32x96 tiling) also improves
-  the performances but, the gap between 32x64 is not as big as the gain 32x64 offers. Thread coarsening has the goal
-  of saturation the memory bandwidth but has the effect of increasing the register presure. So the less big improvement on performance
-  indicate that we may have reached a limit in the register presure.
+  the performance but, the gap between 32x64 is not as big as the gain 32x64 offers. Thread coarsening has the goal
+  of saturating the memory bandwidth but has the effect of increasing the register presure. So the lesser improvement on performance
+  indicate that we have reached the limit.
   To verify this theory with this implementation we would need to go even higher with the coarsening (for example going to 32x128 tiles) to see how it actually scale.
   We cannot do such a thing on this GPU as this tile size (32x96) is the biggest configuration that can fit in the shared memory of each block.
   Indeed, 32x96 uses 4 halfs matrices of 32x32 in the shared memory of each thread blocks, that is 64kb which is the maximum that the Quarto 4000 RTX have available.
-  Still, the CUDA implementation with thread coarsening (32x96 tiling) is not that far behind from the Tensor core implementation, and can even match 
+  Still, the CUDA implementation with thread coarsening (32x96 tiling) is not that far behind from the tensor core implementation, and can even match 
   tensor core speed for a matrix size of 4096x4096.
   Again, the way we compute with mixed precision doesn't seem to make much difference for each thread coarsening versions.
-  However as we will see in figure \ref{fig:precision-impact}, the accuracy for smaller matrices is not good.
+
   
 
   \begin{figure}[h]
@@ -439,20 +438,26 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   
   To look at the precision of our implementations we compare to the CPU how much each value differ in percentage.
   Then we sum up the values of the error and divide by the number of elements in the matrix size.
-  \[error[i,j] = abs(OUT[i,j] - CPU[i,j]) / CPU[i,j] \]
-  \[\mu_{\mathrm{error}} = sum(error)/Matrix\_size\]
 
-  By looking at the figure~\ref{fig:precision-impact} we can see that each thread coarsening implementations (32x96)
+  \begin{align*}
+    e_{ij} &= \frac{|d_{ij}-d_{ij}'|}{d_{ij}} \\
+    \mu &= \frac{1}{n^2} \sum_{i=1}^n\sum_{j=1}^n e_{ij}
+    \end{align*}
+    Where $d_{ij}'$ is the output of the implementation in the $i-$th row and $j-$th column of the matrix,
+    and $n$ is the matrix size.\\
+
+  By looking at the figure~\ref{fig:precision-impact} we can see that each thread coarsening implementation (32x96)
   have an exceptionally high error of more than 25\% compared to the other implementations under a matrix size of 256x256.
-  For smaller matrices the tiling is just not effective an will overlap and hence cause a big error. This is revealing that 
+  For smaller matrices the tiling is just not effective and will overlap and hence cause a big error. This is revealing that 
   our thread coarsening implementation may need some more refinement. The tensor implementation has also a high mean of error of
   more than 5\% on matrices of size 256x256.
   We also see that the error decreases with size with all of these implementations.
   This may be attributed to the number used in our testing, which is random floating point numbers between 0 and 1. 
+  When conducting a test using only integers, the error is 0.
   \begin{figure}[htbp]
     \centering
     \includegraphics[scale=0.6]{figures/Mean of error compared to CPU3.png}
-    \caption{Impact of Precision on mixed precision computation and Tensor cores Performance}
+    \caption{Impact of Precision on mixed precision computation and tensor cores Performance}
     \label{fig:precision-impact}
   \end{figure}
 
@@ -463,12 +468,12 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   \begin{figure}[htbp]
     \centering
     \includegraphics[scale=0.6]{figures/Mean of error MP.png}
-    \caption{Impact of Precision on mixed precision computation and Tensor cores Performance}
+    \caption{Impact of Precision on mixed precision computation and tensor cores Performance}
     \label{fig:precision-impact2}
   \end{figure}
   
-  The results show that using mixed precision (FP16) with Tensor cores can provide significant performance improvements compared to full precision (FP32).
-  This is because Tensor cores can process a larger number of elements simultaneously in FP16,
+  The results show that using mixed precision (FP16) with tensor cores can provide significant performance improvements compared to full precision (FP32).
+  This is because tensor cores can process a larger number of elements simultaneously in FP16,
   leading to higher throughput. This accuracy also improves with time for the matrix sizes.
   Using FP16 then introduces a degree of numerical approximation, affecting the accuracy of the computation.
   Therefore, the choice of computing should be carefully considered based on the specific
@@ -476,27 +481,26 @@ operations in comparison to CPU and GPU. Our contributions will be as follows:
   
   
   \section{Limitations and Challenges}\label{sec:limitations-challenges}
-  The main limitations faced in this project was the limited information regarding how to program Tensor cores.
-  The cuBLASs library, which is an optimized version of MMA with Tensor cores, developed by NVIDIA is not open source,
-  so there is no real way of obtaining it. This led to experimenting with different setups to achieve the fastest copmutation possible.
+  The main limitations faced in this project was the limited information regarding how to program tensor cores.
+  This led to experimenting with different setups to achieve the fastest computation possible.
   Another challenge to achieve fast computation for larger matrices with tensors are the fact that the GPU 
-  only has 64Kb of memory for each work group. With the tensors, the sum of shared memory is then NxN x (16x16).
+  only has 64Kb of memory for each work group. With the tensor, the sum of shared memory is then NxN x (16x16).
   Which corresponds to the matrix size, and the byte size of the elements in the A and B matrix. This entails that the 
   largest matrices that can fit this is of 32x32 elements of half precision.
 
 
   \section{Conclusion}\label{sec:conclusion}
   
-  In this paper, we have explored the performance of NVIDIA Tensor cores for matrix multiplication and accumulation operations. 
-  We conducted experiments to compare the performance of Tensor cores with CPU and GPU implementations, 
+  In this paper, we have explored the performance of NVIDIA tensor cores for matrix multiplication and accumulation operations. 
+  We conducted experiments to compare the performance of tensor cores with CPU and GPU implementations, 
   considering different matrix sizes and precision settings.
 
-  From our result we can see that Tensor cores without any optimization have significantly better computational power
-  than the other, optimized approaches. It is then our belief that to optimize the Tensor core version would 
-  decrease the computational time further. The total time comparison shows that allocation of memory has a significant
-  impact on the time from input to output. Therefore using Tensor cores is optimal in problen where the same data is
-  handled continously, for example in convulational neural network and image processing. The error seems to decrease
-  with matrix size which can be attributed to what values we are using when testing. Using only integers, the error is 0.
+  From our result we can see that tensor cores without any optimization have significantly better computational time
+  than the other approaches. It is then our belief that optimizing the tensor core version would further 
+  decrease the computational time. The total time comparison shows that allocation of memory has a significant
+  impact on the time from input to output. Therefore using tensor cores is optimal in problen where the same data is
+  handled continously, for example in convulational neural network and image processing. The error decreases
+  with matrix size which can be attributed to the values we are using when testing. 
 
   
 
